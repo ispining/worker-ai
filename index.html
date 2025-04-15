@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InterviewAI • AI-Based Tests for Employee Evaluation</title>
+  <!-- Подключаем Font Awesome для иконок -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-p+UO6hS+pX6J7aC1JSe90IrdRRojjkM+j9ViD+7fV3bTJxi60+0/fDfSB6lZl1rXLSB6BGcfScgTWWqtGf5S3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block; /* Prevents potential bottom margin issues */
+    }
+    /* Основной стиль страницы */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f3f2ef;
+      color: #0a2540;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #0077b5;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px; /* Adjusted for smaller text */
+    }
+    /* Селектор языка в шапке */
+    #lang-selector {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 5px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .container {
+      display: flex;
+      /* max-width: 1400px; /* Removed for responsiveness */
+      width: 100%; /* Use full width */
+      box-sizing: border-box; /* Include padding in width calculation */
+      margin: 20px auto;
+      padding: 10px; /* Consistent padding */
+      gap: 10px; /* Reduced gap */
+    }
+    .left-column, .main-content, .right-column {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .left-column { flex: 1; box-sizing: border-box; } /* Use flex-basis for distribution */
+    .main-content {
+      flex: 2;
+      box-sizing: border-box;
+      /* Reverted: display: flex; */
+      /* Reverted: flex-direction: column; */
+    }
+    .right-column { flex: 1; box-sizing: border-box; } /* Use flex-basis for distribution */
+    .left-column h2, .right-column h2 {
+      color: #0077b5;
+      margin-bottom: 15px;
+    }
+    .test-card {
+      background-color: #f9fafb;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccd0d5;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .test-card:hover {
+      background-color: #e6f0fa;
+      transform: scale(1.02);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .test-card.active {
+      background-color: #e6f0fa;
+      border: 2px solid #0077b5;
+      transform: scale(1.02);
+    }
+    .test-card h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #0a2540;
+    }
+    .test-card p {
+      margin: 5px 0 0;
+      font-size: 14px;
+      color: #666;
+    }
+    #test-interface, #result-interface { display: none; }
+    /* Секция диалога */
+    #conversation {
+      max-height: 400px;
+      overflow-y: auto;
+      /* margin-bottom: 20px; /* Removed, handled by parent flex gap or padding */
+      padding: 10px;
+      background-color: #f9fafb;
+      border-radius: 5px;
+    }
+    #conversation p {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #conversation p.ai-message { background-color: #e6f0fa; color: #0a2540; }
+    #conversation p.user-message { background-color: #edf7ed; text-align: right; }
+    #answer-textarea {
+      display: block;
+      width: 100%;
+      height: 120px;
+      margin: 10px 0 0 0;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccd0d5;
+      border-radius: 5px;
+      resize: vertical;
+      font-size: 16px;
+    }
+    #answer-textarea:focus {
+      outline: none;
+      border-color: #0077b5;
+      box-shadow: 0 0 5px rgba(0,119,181,0.3);
+    }
+    #next-question-button {
+      background-color: #0077b5;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    #next-question-button:hover { background-color: #005f8d; }
+    /* Раздел результата */
+    #result-interface {
+      display: none;
+      text-align: center;
+      background: linear-gradient(135deg, #2c3e50, #4ca1af);
+      border-radius: 10px;
+      padding: 40px 20px;
+      color: #ffffff;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      animation: fadeIn 0.8s ease-in-out;
+      position: relative;
+    }
+    /* Обёртка для финального результата – без лишних отступов */
+    #capture-wrapper {
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+    .radar-chart-container {
+      max-width: 500px;
+      width: 100%; /* Allow shrinking below max-width */
+      margin: 0 auto 30px;
+      background: rgba(0,0,0,0.3);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+    .scores-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .score-card {
+      background: rgba(255,255,255,0.15);
+      padding: 15px;
+      border-radius: 8px;
+      /* width: 100px; /* Removed fixed width */
+      flex: 1 1 80px; /* Flexible sizing: grow, shrink, basis 80px */
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .score-card h4 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      line-height: 1.2;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      color: #ffffff;
+    }
+    .score-card p {
+      margin: 0;
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.2;
+      color: #ffffff;
+    }
+    #result-description {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255,255,253,0.2);
+      border-radius: 10px;
+      font-size: 16px;
+      line-height: 1.4;
+      color: #d3d3d3;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .restart-button,
+    .share-button {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background-color 0.3s ease;
+    }
+    .restart-button {
+      background-color: #007bff;
+      color: white;
+      margin-right: 10px;
+    }
+    .restart-button:hover { background-color: #0056b3; }
+    .share-button {
+      background-color: #28a745;
+      color: white;
+      margin-left: 10px;
+    }
+    .share-button:hover { background-color: #1e7e34; }
+    /* Контейнер для кнопок и селектора скачивания */
+    .download-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    #download-lang-selector {
+      padding: 8px 12px;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      background-color: #fff;
+      color: #333;
+    }
+    #download-lang-selector:focus {
+      outline: none;
+      border-color: #0077b5;
+      box-shadow: 0 0 5px rgba(0,119,181,0.3);
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        padding: 5px; /* Reduced padding for mobile */
+        gap: 5px; /* Reduced gap for mobile */
+      }
+      .left-column, .main-content, .right-column {
+        width: 100%; /* Full width on mobile */
+        padding: 10px; /* Consistent padding for mobile columns */
+        flex: auto; /* Reset flex properties for column layout */
+      }
+      .download-section { flex-direction: column; gap: 5px; }
+      #user-info-card { flex-wrap: wrap; justify-content: center; text-align: center; } /* Allow wrapping & center on mobile */
+      .user-info-right { align-items: center; margin-left: 0; } /* Center contact info */
+      .scores-container { gap: 10px; } /* Adjust gap for mobile */
+      .score-card { flex-basis: 70px; } /* Adjust basis slightly for mobile */
+      header h1 { font-size: 24px; } /* Reduce header size */
+      #lang-selector { top: 10px; right: 10px; font-size: 14px; } /* Adjust language selector position */
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Стили для модального окна сбора данных пользователя */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    .modal-content label {
+      display: block;
+      margin-top: 10px;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .modal-content button {
+      margin-top: 15px;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      background-color: #0077b5;
+      color: white;
+      cursor: pointer;
+    }
+    .modal-content button:hover {
+      background-color: #005f8d;
+    }
+    /* Стили для карточки с пользовательскими данными */
+    #user-info-card {
+      background-color: #ffffff;
+      color: #0a2540;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap; /* Allow content to wrap */
+      padding: 20px 25px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .user-info-left h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .user-info-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      margin-left: 40px;
+    }
+    .contact-row {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    
+        #chat-container {
+          /* max-height: 80vh; /* Removed fixed/vh height */
+          /* height: 100vh; /* Removed fixed/vh height */
+          height: 75vh; /* Set viewport height for mobile */
+          max-height: 75vh; /* Ensure it doesn't exceed this */
+          /* flex-grow: 1; /* Removed, height is now explicit */
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          /* border: 1px solid #ccd0d5; */ /* Removed border */
+          padding: 10px 10px 0 10px; /* Removed bottom padding */
+          background-color: #f9fafb;
+          border-radius: 0;
+          overflow-x: hidden;
+        }
+    @media (min-width: 769px) {
+      #chat-container {
+        height: 600px; /* Fixed height for larger screens */
+        max-height: 600px; /* Fixed height for larger screens */
+      }
+    }
+
+    #input-container {
+      display: flex;
+      align-items: stretch; /* Make button take full height */
+      margin-bottom: 0px;
+      /* margin-top: auto; /* Removed, flexbox handles positioning */
+    }
+
+    #answer-textarea {
+      resize: none; /* Disable resize */
+      margin: 0; /* Remove default margins */
+      margin-bottom: 0 !important; /* Ensure no bottom margin */
+      flex-grow: 1; /* Take up remaining width */
+      border-radius: 20px 0 0 20px;
+      border-right: none;
+    }
+
+    #next-question-button {
+      padding: 0;
+      border: none;
+      background-color: #0077b5;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+      flex-shrink: 0; /* Prevent button from shrinking */
+      padding: 10px;
+      height: 100%; /* Adjust the height as needed */
+      width: 60px; /* Adjust the width as needed */
+      white-space: nowrap;
+     border-radius: 0 20px 20px 0 !important;
+    }
+    html[dir="rtl"] #next-question-button {
+      border-radius: 20px 0 0 20px !important;
+    }
+    #next-question-button i {
+      color: white !important;
+    }
+
+    #conversation {
+      overflow-y: auto;
+      flex-grow: 1; /* Allow conversation to take up available space */
+    }
+  </style>
+</head>
+<style>
+  html, body {
+    height: 100%;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+  .container {
+    flex: 1;
+  }
+  footer {
+    background-color: #f8f9fa;
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid #dee2e6;
+  }
+  footer p {
+    font-size: 14px;
+    color: #6c757d;
+  }
+</style>
+<body>
+  <header>
+    <h1 id="header-title"></h1>
+    <select id="lang-selector">
+      <option value="en">English</option>
+      <option value="ru">Русский</option>
+      <option value="he">עברית</option>
+    </select>
+  </header>
+  <div class="container">
+    <!-- Левый столбец: меню тестов -->
+    <aside class="left-column">
+      <h2 id="left-column-title"></h2>
+      <div id="test-list"></div>
+    </aside>
+    <!-- Центральный контент -->
+    <main class="main-content">
+      <section id="welcome-section">
+        <h2 id="welcome-title"></h2>
+        <p id="welcome-description"></p>
+        <img id="welcome-image" src="https://via.placeholder.com/600x300" alt="">
+      </section>
+      <style>
+       #test-interface {
+         margin-bottom: 0px;
+       }
+      </style>
+      <section id="test-interface">
+        <h2 id="test-title"></h2>
+        <div id="chat-container">
+          <div id="conversation"></div>
+          <div id="input-container">
+            <textarea id="answer-textarea" rows="5" placeholder=""></textarea>
+            <button id="next-question-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 11 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <script>
+          document.getElementById('answer-textarea').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+              if (event.shiftKey) {
+                // Insert newline character
+                this.value += '\n';
+              } else {
+                // Prevent default and trigger button click
+                event.preventDefault();
+                document.getElementById('next-question-button').click();
+              }
+            }
+          });
+        </script>
+      </section>
+      <section id="result-interface">
+        <!-- Обёртка для финального результата, которая будет захвачена -->
+        <div id="capture-wrapper">
+          <div id="result-header"></div>
+          <!-- Элемент для карточки с пользовательскими данными -->
+          <div id="user-info-card"></div>
+          <div class="radar-chart-container">
+            <canvas id="radar-chart"></canvas>
+          </div>
+          <div class="scores-container" id="scores-container"></div>
+          <div id="result-description"></div>
+          <div class="download-section">
+            <button class="restart-button" onclick="location.reload();"></button>
+            <label for="download-lang-selector">Download language:</label>
+            <select id="download-lang-selector">
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
+              <option value="he">עברית</option>
+            </select>
+            <button class="share-button" onclick="downloadImage()"></button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- Правый столбец -->
+    <aside class="right-column">
+      <h2 id="right-column-title"></h2>
+      <p id="right-column-advice"></p>
+      <div class="donation-container">
+        <h2 id="supportUsTitle"><span data-translate="supportUsTitle">Support Our Project</span></h2>
+        <p id="supportUsDescription"><span data-translate="supportUsDescription">Your contribution helps us maintain and improve this platform.</span></p>
+        <button id="supportUsButton" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: block; width: 100%; font-size: 16px; cursor: pointer; border-radius: 5px;"><span data-translate="supportUsButton">Support the Project</span></button>
+      </div>
+    </aside>
+  </div>
+  
+  <!-- Модальное окно для ввода данных пользователя -->
+  <div id="user-data-modal" class="modal">
+    <div class="modal-content">
+      <h2></h2>
+      <form id="user-data-form">
+        <label for="firstName"></label>
+        <input type="text" id="firstName" name="firstName" required>
+        <label for="lastName"></label>
+        <input type="text" id="lastName" name="lastName" required>
+        <label for="email"></label>
+        <input type="email" id="email" name="email">
+        <label for="phone"></label>
+        <input type="tel" id="phone" name="phone">
+        <label for="links"></label>
+        <input type="text" id="links" name="links">
+        <button type="submit"><i class="fas fa-check"></i> Submit</button>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Функция задержки
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  
+    // Глобальная переменная для хранения итогового результата
+    let finalResult = null;
+  
+    // Объект переводов для всех языков
+    const translations = {
+      en: {
+        headerTitle: "InterviewAI • AI-Based Tests for Employee Evaluation",
+        leftColumnTitle: "Select Test",
+        welcomeTitle: "Welcome!",
+        welcomeDescription: "Our platform helps reveal your professional qualities using AI-based tests. Simply select a test from the menu on the left.",
+        welcomeImageAlt: "Platform illustration",
+        testInterface: { sendAnswer: "Submit Answer" },
+        resultInterface: { header: "Your Results", restart: "Restart Test", download: "Download as PNG" },
+        rightColumnTitle: "Advice",
+        rightColumnAdvice: "Answer honestly and take your time – the AI analyzes every word.",
+        
+        supportUsTitle: "Support Our Project",
+        supportUsDescription: "Your contribution helps us maintain and improve this platform.",
+        supportUsButton: "Support the Project",
+        modal: {
+          header: "Enter your Data",
+          firstName: "First Name",
+          lastName: "Last Name",
+          email: "Email",
+          phone: "Phone",
+          links: "Additional links",
+          confirm: "Confirm"
+        },
+        tests: [
+          
+          {
+            id: 1,
+            name: "Leadership Test",
+            description: "Assess your leadership qualities",
+            prompt: "You are an AI agent conducting a test to identify leadership qualities through simple conversation. Start with a clear question, for example: \"Tell me about a time when you had to fix an argument in your team. How did you handle it and what was the result?\" Do not give the final result until at least 15 different questions have been asked. During the conversation, talk about your plans for the future, your experience working in groups, or your involvement in social activities, without directly mentioning leadership qualities. For example, asking \"How do you usually spend your weekends?\" can reveal your organizational skills or initiative. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"initiative\": <score from 1 to 10>, \"responsibility\": <score from 1 to 10>, \"communication\": <score from 1 to 10>, \"decision_making\": <score from 1 to 10>, \"conflict_management\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { initiative: 5, responsibility: 5, communication: 5, decision_making: 5, conflict_management: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 2,
+            name: "Creativity Test",
+            description: "Assess your creativity level",
+            prompt: "You are an AI agent conducting a test to identify creativity through situational conversation. Start with a clear question, for example: \"Describe a project where you had to think outside the box. What was your approach?\" Do not give the final result until at least 5 different questions have been asked. During the conversation, talk about your experiences in creative projects, your ability to generate new ideas, or how you approach problem-solving. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"creativity\": <score from 1 to 10>, \"problem_solving\": <score from 1 to 10>, \"innovation\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { creativity: 5, problem_solving: 5, innovation: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+          },
+          {
+            id: 3,
+            name: "Analytical Thinking Test",
+            description: "Assess your analytical thinking skills",
+            prompt: "You are an AI agent conducting a test to identify analytical thinking skills through situational conversation. Start with a clear question, for example: \"Describe a complex problem you solved recently. What was your approach?\" Do not give the final result until at least 8 different questions have been asked. During the conversation, talk about your experiences in analyzing data, making decisions based on evidence, or how you approach problem-solving. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"analytical_skills\": <score from 1 to 10>, \"critical_thinking\": <score from 1 to 10>, \"problem_solving\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { analytical_skills: 5, critical_thinking: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+            },
+          {
+            id: 4,
+            name: "Communication Skills Test",
+            description: "Assess your communication skills",
+            prompt: "You are an AI agent conducting a test to identify communication skills through situational conversation. Start with a clear question, for example: \"Describe a situation where you had to communicate a complex idea to someone. How did you ensure they understood?\" Do not give the final result until at least 6 different questions have been asked. During the conversation, talk about your experiences in communicating with others, your ability to listen actively, or how you approach difficult conversations. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"communication_skills\": <score from 1 to 10>, \"active_listening\": <score from 1 to 10>, \"conflict_resolution\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { communication_skills: 5, active_listening: 5, conflict_resolution: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+          },
+          {
+            id: 5,
+            name: "Adaptability and pressure Test",
+            description: "Assess your adaptability and pressure handling skills",
+            prompt: "You are an AI agent conducting a test to identify adaptability and pressure handling skills through situational conversation. Start with a clear question, for example: \"Describe a time when you had to adapt to a sudden change at work. How did you handle it?\" Do not give the final result until at least 7 different questions have been asked. During the conversation, talk about your experiences in adapting to new situations, your ability to handle stress, or how you approach unexpected challenges. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"adaptability\": <score from 1 to 10>, \"pressure_handling\": <score from 1 to 10>, \"problem_solving\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { adaptability: 5, pressure_handling: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+          },
+          {
+            id: 6,
+            name: "Strategic Thinking Test",
+            description: "Assess your strategic thinking skills",
+            prompt: "You are an AI agent conducting a test to identify strategic thinking skills through situational conversation. Start with a clear question, for example: \"Describe a situation where you had to develop a long-term plan. What was your approach?\" Do not give the final result until at least 10 different questions have been asked. During the conversation, talk about your experiences in strategic planning, your ability to think ahead, or how you approach complex problems. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"strategic_thinking\": <score from 1 to 10>, \"long_term_planning\": <score from 1 to 10>, \"problem_solving\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { strategic_thinking: 5, long_term_planning: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+          },
+          {
+            id: 7,
+            name: "Social-Empathy Test",
+            description: "Assess your social-empathy skills",
+            prompt: "You are an AI agent conducting a test to identify social-empathy skills through situational conversation. Start with a clear question, for example: \"Describe a situation where you had to understand someone else's perspective. How did you approach it?\" Do not give the final result until at least 5 different questions have been asked. During the conversation, talk about your experiences in understanding others, your ability to empathize, or how you approach social situations. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"social_empathy\": <score from 1 to 10>, \"understanding_others\": <score from 1 to 10>, \"problem_solving\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { social_empathy: 5, understanding_others: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+          },
+          {
+            id: 8,
+            name: "Time Management Test",
+            description: "Assess your time management skills",
+            prompt: "You are an AI agent conducting a test to identify time management skills through situational conversation. Start with a clear question, for example: \"Describe a situation where you had to manage multiple tasks at once. How did you prioritize?\" Do not give the final result until at least 6 different questions have been asked. During the conversation, talk about your experiences in managing time, your ability to prioritize tasks, or how you approach deadlines. When enough information is collected, return ONLY a JSON object in the following format: { \"status\": \"result\", \"content\": { \"time_management\": <score from 1 to 10>, \"prioritization\": <score from 1 to 10>, \"problem_solving\": <score from 1 to 10>, \"descriptions\": { \"en\": \"<Dynamic description in English>\", \"ru\": \"<Dynamic description in Russian>\", \"he\": \"<Dynamic description in Hebrew>\" } } } Until there is enough information for a conclusion, only respond using: {\"status\": \"progress\", \"content\": \"<Your question>\"} Use scores strictly on a scale from 1 to 10.",
+            fallback: { status: "result", content: { time_management: 5, prioritization: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Test could not be completed due to API issues. Please try again.", he: "Test could not be completed due to API issues. Please try again." } } }
+          }
+        ]
+      },
+      ru: {
+        headerTitle: "InterviewAI • Тесты на основе ИИ для оценки качеств работника",
+        leftColumnTitle: "Выберите тест",
+        welcomeTitle: "Добро пожаловать!",
+        welcomeDescription: "Наша платформа помогает раскрыть ваши профессиональные качества с помощью тестов на основе искусственного интеллекта. Просто выберите тест из меню слева.",
+        welcomeImageAlt: "Иллюстрация платформы",
+        testInterface: { sendAnswer: "Отправить ответ" },
+        resultInterface: { header: "Ваши результаты", restart: "Пройти тест снова", download: "Скачать как PNG" },
+        rightColumnTitle: "Советы",
+        rightColumnAdvice: "Отвечайте честно и не торопитесь — ИИ анализирует каждое слово.",
+        modal: {
+          header: "Введите ваши данные",
+          firstName: "Имя",
+          lastName: "Фамилия",
+          email: "Электронная почта",
+          phone: "Номер телефона",
+          links: "Дополнительные ссылки",
+          confirm: "Подтвердить",
+          supportUsTitle: "Поддержать наш проект",
+          supportUsDescription: "Ваш вклад помогает нам поддерживать и улучшать эту платформу.",
+          supportUsButton: "Поддержать проект",
+        },
+        tests: [
+          {
+            id: 1,
+            name: "Тест на лидерство",
+            description: "Оценка лидерских качеств",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления лидерских качеств через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось разрешать конфликт в команде. Как ты действовал и каков был результат?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 15 вопросов разного характера.\n\nТы ведешь беседу о планах на будущее, опыте работы в группах или участии в неформальных мероприятиях, не упоминая напрямую лидерские качества. Например, вопрос «Как вы обычно проводите выходные?» может раскрыть организаторские способности или инициативность в неформальной обстановке.\n\nКогда информации достаточно, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{\n\"status\": \"result\",\n\"content\": {\n\"initiative\": <оценка от 1 до 10>,\n\"responsibility\": <оценка от 1 до 10>,\n\"communication\": <оценка от 1 до 10>,\n\"decision_making\": <оценка от 1 до 10>,\n\"conflict_management\": <оценка от 1 до 10>,\n\"descriptions\": {\n\"en\": \"<Описание на английском>\",\n\"ru\": \"<Описание на русском>\",\n\"he\": \"<Описание на иврите>\"\n}\n}\n}\n\nВо время общения возвращай сообщения в формате, пока информации не достаточно для заключения – ты отвечаешь только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}",
+            fallback: { status: "result", content: { initiative: 5, responsibility: 5, communication: 5, decision_making: 5, conflict_management: 5, descriptions: { en: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "Не удалось завершить тест из-за проблем с API. Попробуйте снова." } } }
+            },
+          {
+            id: 2,
+            name: "Тест на креативность",
+            description: "Анализ оригинальности мышления, способности генерировать нестандартные идеи и находить творческие решения в бытовых и профессиональных ситуациях.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления креативности через ситуационное общение. Начни с конкретного вопроса, например:\n\"Расскажи о ситуации, когда тебе пришлось придумать нестандартное решение сложной задачи. Как ты подошёл к этому?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 15 вопросов разных типов.\n\nВо время общения веди разговор о твоих идеях, планах на будущее, участии в творческих проектах или уникальных мероприятиях, не упоминая напрямую креативность. Например, вопрос «Как ты обычно проводишь свободное время?» может показать твои творческие наклонности и оригинальность мышления.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"originality\": <оценка от 1 до 10>, \"flexibility\": <оценка от 1 до 10>, \"imagination\": <оценка от 1 до 10>, \"problem_solving\": <оценка от 1 до 10>, \"risk_taking\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { originality: 5, flexibility: 5, imagination: 5, problem_solving: 5, risk_taking: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 3,
+            name: "Тест на аналитическое мышление",
+            description: "Анализ логики, способности к абстрактному мышлению и решению задач.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления аналитического мышления через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось решать сложную задачу. Как ты подошёл к этому?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 10 вопросов разных типов.\n\nВо время общения веди разговор о твоем опыте решения сложных задач, способности к абстрактному мышлению или логике.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"logic\": <оценка от 1 до 10>, \"analysis\": <оценка от 1 до 10>, \"problem_solving\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { logic: 5, analysis: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 4,
+            name: "Тест на коммуникативные навыки",
+            description: "Анализ способности к эффективному общению и взаимодействию с другими.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления коммуникативных навыков через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось объяснять сложную идею кому-то другому. Как ты это сделал?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 10 вопросов разных типов.\n\nВо время общения веди разговор о твоем опыте общения с другими людьми, способности к эффективному взаимодействию или умении слушать.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"communication\": <оценка от 1 до 10>, \"listening\": <оценка от 1 до 10>, \"empathy\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { communication: 5, listening: 5, empathy: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 5,
+            name: "Тест на адаптивность и стрессоустойчивость",
+            description: "Анализ способности адаптироваться к изменениям и справляться со стрессом.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления адаптивности и стрессоустойчивости через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось адаптироваться к неожиданным изменениям. Как ты справился с этим?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 10 вопросов разных типов.\n\nВо время общения веди разговор о твоем опыте адаптации к изменениям, способности справляться со стрессом или умении находить решения в сложных ситуациях.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"adaptability\": <оценка от 1 до 10>, \"stress_management\": <оценка от 1 до 10>, \"problem_solving\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { adaptability: 5, stress_management: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 6,
+            name: "Тест на стратегическое мышление",
+            description: "Анализ способности к стратегическому планированию и принятию решений.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления стратегического мышления через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось принимать стратегические решения. Как ты подошёл к этому?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 10 вопросов разных типов.\n\nВо время общения веди разговор о твоем опыте стратегического планирования, способности принимать решения на основе анализа данных или умении предвидеть последствия своих действий.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"strategic_thinking\": <оценка от 1 до 10>, \"decision_making\": <оценка от 1 до 10>, \"problem_solving\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { strategic_thinking: 5, decision_making: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 7,
+            name: "Тест на социальную восприимчивость и эмпатию",
+            description: "Анализ способности к пониманию и сопереживанию другим.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления социальной восприимчивости и эмпатии через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось понять чувства другого человека. Как ты это сделал?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 10 вопросов разных типов.\n\nВо время общения веди разговор о твоем опыте понимания эмоций других людей, способности сопереживать или умении находить общий язык с разными людьми.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"social_perception\": <оценка от 1 до 10>, \"empathy\": <оценка от 1 до 10>, \"communication\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { social_perception: 5, empathy: 5, communication: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 8,
+            name: "Тест на управление временем",
+            description: "Анализ способности к эффективному управлению временем и приоритетами.",
+            prompt: "Ты ИИ-агент, ведущий тест для выявления управления временем через ситуационное общение. Начни с конкретного вопроса, например:\n\"Опиши ситуацию, когда тебе пришлось управлять несколькими задачами одновременно. Как ты это сделал?\"\n\nНе возвращай итоговый результат до тех пор, пока не будет задано как минимум 10 вопросов разных типов.\n\nВо время общения веди разговор о твоем опыте управления временем, способности расставлять приоритеты или умении планировать свои действия.\n\nКогда будет собрано достаточно информации, верни ТОЛЬКО JSON-объект в следующем формате:\n\n{ \"status\": \"result\", \"content\": { \"time_management\": <оценка от 1 до 10>, \"prioritization\": <оценка от 1 до 10>, \"planning\": <оценка от 1 до 10>, \"descriptions\": { \"en\": \"<Динамическое описание на английском>\", \"ru\": \"<Динамическое описание на русском>\", \"he\": \"<Динамическое описание на иврите>\" } } }\n\nДо получения достаточной информации отвечай только в формате:\n\n{\"status\": \"progress\", \"content\": \"<Твой вопрос>\"}\n\nИспользуй оценки строго по шкале от 1 до 10.",
+            fallback: { status: "result", content: { time_management: 5, prioritization: 5, planning: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          }
+        ]
+      },
+      he: {
+        headerTitle: "InterviewAI • מבחנים מבוססי AI להערכת תכונות העובד",
+        leftColumnTitle: "בחר מבחן",
+        welcomeTitle: "ברוך הבא!",
+        welcomeDescription: "הפלטפורמה שלנו עוזרת לחשוף את איכויות המקצועיות שלך באמצעות מבחנים מבוססי בינה מלאכותית. פשוט בחר מבחן מהתפריט בצד השמאלי.",
+        welcomeImageAlt: "אילוסטרציה של הפלטפורמה",
+        testInterface: { sendAnswer: "שלח תשובה" },
+        resultInterface: { header: "התוצאות שלך", restart: "הפעל שוב את המבחן", download: "הורד כ-PNG" },
+        rightColumnTitle: "עצות",
+        rightColumnAdvice: "ענה בכנות ואל תמהר — הבינה המלאכותית מנתחת כל מילה.",
+        modal: {
+          header: "הזן את פרטיך",
+          firstName: "שם פרטי",
+          lastName: "שם משפחה",
+          email: "אימייל",
+          phone: "טלפון",
+          links: "קישורים נוספים",
+          supportUsTitle: "תמכו בפרויקט שלנו",
+          supportUsDescription: "התרומה שלך עוזרת לנו לתחזק ולשפר את הפלטפורמה הזו.",
+          supportUsButton: "תמכו בפרויקט",
+          confirm: "אשר"
+        },
+        tests: [
+          {
+            id: 1,
+            name: "מבחן מנהיגות",
+            description: "הערכת איכויות מנהיגות",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת תכונות מנהיגות בשיחה פשוטה. התחל עם שאלה ברורה, למשל: \"ספר על מקרה שבו נאלצת לפתור וויכוח בצוות. איך פעלת ומה הייתה התוצאה?\" אל תחזיר את התוצאה הסופית עד שלא נכתבו לפחות 15 שאלות שונות. במהלך השיחה, דבר על תוכניות לעתיד, ניסיון בעבודה בקבוצות או השתתפות בפעילויות חברתיות, מבלי להזכיר ישירות את תכונות המנהיגות. למשל, השאלה \"איך אתה מבלה את סוף השבוע?\" יכולה לעזור להראות יוזמה או יכולת ארגון. כאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: {  \"status\": \"result\",  \"content\": {    \"initiative\": <ציון מ-1 עד 10>,    \"responsibility\": <ציון מ-1 עד 10>,    \"communication\": <ציון מ-1 עד 10>,    \"decision_making\": <ציון מ-1 עד 10>,    \"conflict_management\": <ציון מ-1 עד 10>,    \"descriptions\": {      \"en\": \"<תיאור באנגלית>\",      \"ru\": \"<תיאור ברוסית>\",      \"he\": \"<תיאור בעברית>\"    }  }} עד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { initiative: 5, responsibility: 5, communication: 5, decision_making: 5, conflict_management: 5, descriptions: { en: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 2,
+            name: "מבחן יצירתיות",
+            description: "ניתוח מקוריות החשיבה, היכולת לייצר רעיונות לא שגרתיים ולמצוא פתרונות יצירתיים במצבים יומיומיים ומקצועיים.",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת יצירתיות בשיחה סיטואציונית. התחל עם שאלה קונקרטית, לדוגמה: \"ספר על מצב שבו נאלצת למצוא פתרון לא שגרתי לבעיה קשה. איך התמודדת עם זה?\" אל תחזיר את התוצאה הסופית עד שלא תשאל לפחות 15 שאלות שונות. במהלך השיחה, דבר על רעיונות שלך, תוכניות לעתיד, השתתפות בפרויקטים יצירתיים או אירועים ייחודיים, מבלי להזכיר ישירות את היצירתיות. לדוגמה, השאלה \"איך אתה מבלה את הזמן הפנוי שלך?\" יכולה להראות נטיות יצירתיות ומקוריות חשיבה. כאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: { \"status\": \"result\", \"content\": { \"originality\": <ציון מ-1 עד 10>, \"flexibility\": <ציון מ-1 עד 10>, \"imagination\": <ציון מ-1 עד 10>, \"problem_solving\": <ציון מ-1 עד 10>, \"risk_taking\": <ציון מ-1 עד 10>, \"descriptions\": { \"en\": \"<תיאור באנגלית>\", \"ru\": \"<תיאור ברוסית>\", \"he\": \"<תיאור בעברית>\" } } }\n\nעד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { originality: 5, flexibility: 5, imagination: 5, problem_solving: 5, risk_taking: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 3,
+            name: "מבחן חשיבה אנליטית",
+            description: "ניתוח לוגיקה, היכולת לחשוב באופן מופשט ולפתור בעיות.",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת חשיבה אנליטית בשיחה סיטואציונית. התחל עם שאלה קונקרטית, לדוגמה: \"ספר על מצב שבו נאלצת לפתור בעיה קשה. איך התמודדת עם זה?\" אל תחזיר את התוצאה הסופית עד שלא תשאל לפחות 10 שאלות שונות. במהלך השיחה, דבר על ניסיונך בפתרון בעיות קשות, היכולת לחשוב באופן מופשט או לוגיקה.\n\nכאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: { \"status\": \"result\", \"content\": { \"logic\": <ציון מ-1 עד 10>, \"analysis\": <ציון מ-1 עד 10>, \"problem_solving\": <ציון מ-1 עד 10>, \"descriptions\": { \"en\": \"<תיאור באנגלית>\", \"ru\": \"<תיאור ברוסית>\", \"he\": \"<תיאור בעברית>\" } } }\n\nעד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { logic: 5, analysis: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 4,
+            name: " מבחן יכולות תקשורת",
+            description: "הערכת יכולת לתקשר בצורה ברורה יעילה וחברותית",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת יכולות תקשורת בשיחה סיטואציונית. התחל עם שאלה קונקרטית, לדוגמה: \"ספר על מצב שבו נאלצת להסביר רעיון קשה למישהו. איך עשית את זה?\" אל תחזיר את התוצאה הסופית עד שלא תשאל לפחות 10 שאלות שונות. במהלך השיחה, דבר על ניסיונך בהסברת רעיונות קשים, היכולת להקשיב לאחרים או לנהל שיחות.\n\nכאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: { \"status\": \"result\", \"content\": { \"clarity\": <ציון מ-1 עד 10>, \"empathy\": <ציון מ-1 עד 10>, \"active_listening\": <ציון מ-1 עד 10>, \"descriptions\": { \"en\": \"<תיאור באנגלית>\", \"ru\": \"<תיאור ברוסית>\", \"he\": \"<תיאור בעברית>\" } } }\n\nעד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { clarity: 5, empathy: 5, active_listening: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 5,
+            name: "מבחן הסתגלות ועמידות במתח",
+            description: "הערכת יכולת להסתגל לשינויים ולמצבים מלחיצים.",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת הסתגלות ועמידות במתח בשיחה סיטואציונית. התחל עם שאלה קונקרטית, לדוגמה: \"ספר על מצב שבו נאלצת להסתגל לשינוי פתאומי בעבודה. איך התמודדת עם זה?\" אל תחזיר את התוצאה הסופית עד שלא תשאל לפחות 10 שאלות שונות. במהלך השיחה, דבר על ניסיונך במצבים מלחיצים, היכולת להסתגל לשינויים או לנהל מצבים קשים.\n\nכאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: { \"status\": \"result\", \"content\": { \"adaptability\": <ציון מ-1 עד 10>, \"stress_management\": <ציון מ-1 עד 10>, \"problem_solving\": <ציון מ-1 עד 10>, \"descriptions\": { \"en\": \"<תיאור באנגלית>\", \"ru\": \"<תיאור ברוסית>\", \"he\": \"<תיאור בעברית>\" } } }\n\nעד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { adaptability: 5, stress_management: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 6,
+            name: "מבחן חשיבה סטרטגית",
+            description: "הערכת יכולת לחשוב קדימה ולתכנן פעולות לעתיד.",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת חשיבה סטרטגית בשיחה סיטואציונית. התחל עם שאלה קונקרטית, לדוגמה: \"ספר על מצב שבו נאלצת לתכנן פרויקט גדול. איך עשית את זה?\" אל תחזיר את התוצאה הסופית עד שלא תשאל לפחות 10 שאלות שונות. במהלך השיחה, דבר על ניסיונך בתכנון פרויקטים, היכולת לחשוב קדימה או לנהל משימות.\n\nכאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: { \"status\": \"result\", \"content\": { \"strategic_thinking\": <ציון מ-1 עד 10>, \"planning\": <ציון מ-1 עד 10>, \"problem_solving\": <ציון מ-1 עד 10>, \"descriptions\": { \"en\": \"<תיאור באנגלית>\", \"ru\": \"<תיאור ברוסית>\", \"he\": \"<תיאור בעברית>\" } } }\n\nעד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { strategic_thinking: 5, planning: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+          {
+            id: 7,
+            name: "מבחן ניהול זמן",
+            description: "הערכת יכולת לתכנן ולנהל את הזמן שלך בצורה יעילה.",
+            prompt: "אתה סוכן בינה מלאכותית שמנהל מבחן לבדיקת ניהול זמן בשיחה סיטואציונית. התחל עם שאלה קונקרטית, לדוגמה: \"ספר על מצב שבו נאלצת לנהל את הזמן שלך בצורה יעילה. איך עשית את זה?\" אל תחזיר את התוצאה הסופית עד שלא תשאל לפחות 10 שאלות שונות. במהלך השיחה, דבר על ניסיונך בניהול זמן, היכולת לתכנן משימות או לנהל פרויקטים.\n\nכאשר יהיה מספיק מידע, החזר רק אובייקט JSON באופן הבא: { \"status\": \"result\", \"content\": { \"time_management\": <ציון מ-1 עד 10>, \"planning\": <ציון מ-1 עד 10>, \"problem_solving\": <ציון מ-1 עד 10>, \"descriptions\": { \"en\": \"<תיאור באנגלית>\", \"ru\": \"<תיאור ברוסית>\", \"he\": \"<תיאור בעברית>\" } } }\n\nעד שיהיה מספיק מידע, השב רק כך: {\"status\": \"progress\", \"content\": \"<השאלה שלך>\"} השתמש בציונים מ-1 עד 10 בלבד.",
+            fallback: { status: "result", content: { time_management: 5, planning: 5, problem_solving: 5, descriptions: { en: "Test could not be completed due to API issues. Please try again.", ru: "Не удалось завершить тест из-за проблем с API. Попробуйте снова.", he: "המבחן לא הושלם עקב בעיות ב-API. נסה שוב." } } }
+          },
+        ]
+      }
+    };
+  
+    // Начальный выбранный язык страницы – английский
+    let currentLang = "en";
+  
+    function updateStaticTexts() {
+      document.getElementById("header-title").textContent = translations[currentLang].headerTitle;
+      document.documentElement.setAttribute("lang", currentLang);
+      document.documentElement.setAttribute("dir", currentLang === "he" ? "rtl" : "ltr");
+  
+      document.getElementById("left-column-title").textContent = translations[currentLang].leftColumnTitle;
+      document.getElementById("welcome-title").textContent = translations[currentLang].welcomeTitle;
+      document.getElementById("welcome-description").textContent = translations[currentLang].welcomeDescription;
+      document.getElementById("welcome-image").setAttribute("alt", translations[currentLang].welcomeImageAlt);
+  
+//      document.getElementById("next-question-button").textContent = translations[currentLang].testInterface.sendAnswer;
+      document.getElementById("answer-textarea").setAttribute("placeholder", translations[currentLang].testInterface.sendAnswer);
+  
+      document.getElementById("result-header").textContent = translations[currentLang].resultInterface.header;
+      document.querySelector(".restart-button").textContent = translations[currentLang].resultInterface.restart;
+      document.querySelector(".share-button").textContent = translations[currentLang].resultInterface.download;
+  
+      document.getElementById("right-column-title").textContent = translations[currentLang].rightColumnTitle;
+      document.getElementById("right-column-advice").textContent = translations[currentLang].rightColumnAdvice;
+      
+      // Обновляем текст во всплывающем окне согласно языку страницы
+      const modal = document.getElementById("user-data-modal");
+      if (modal) {
+        modal.querySelector("h2").textContent = translations[currentLang].modal.header;
+        modal.querySelector("label[for='firstName']").textContent = translations[currentLang].modal.firstName + ":";
+        modal.querySelector("label[for='lastName']").textContent = translations[currentLang].modal.lastName + ":";
+        modal.querySelector("label[for='email']").textContent = translations[currentLang].modal.email;
+        modal.querySelector("label[for='phone']").textContent = translations[currentLang].modal.phone;
+        modal.querySelector("label[for='links']").textContent = translations[currentLang].modal.links;
+        modal.querySelector("#user-data-form button[type='submit']").textContent = translations[currentLang].modal.confirm;
+      }
+    }
+  
+    function renderTestList() {
+      const testListDiv = document.getElementById("test-list");
+      testListDiv.innerHTML = "";
+      translations[currentLang].tests.forEach(testData => {
+        const card = document.createElement("div");
+        card.className = "test-card";
+        card.innerHTML = `<h3>${testData.name}</h3><p>${testData.description}</p>`;
+        card.addEventListener("click", (event) => { startTest(testData, event); });
+        testListDiv.appendChild(card);
+      });
+    }
+  
+    document.getElementById("lang-selector").addEventListener("change", (e) => {
+      currentLang = e.target.value;
+      updateStaticTexts();
+      renderTestList();
+      localStorage.setItem('language', currentLang);
+    });
+
+    // Check if a language is stored in local storage
+    const storedLanguage = localStorage.getItem('language');
+    if (storedLanguage) {
+      currentLang = storedLanguage;
+    }
+
+    renderTestList();
+
+    // Detect browser language
+    const browserLanguage = navigator.language || navigator.userLanguage;
+    const supportedLanguages = ['en', 'ru', 'he'];
+    let initialLanguage = 'en'; // Default to English
+
+    if (supportedLanguages.includes(browserLanguage.substring(0, 2))) {
+      initialLanguage = browserLanguage.substring(0, 2);
+    }
+
+    currentLang = initialLanguage;
+
+    // Check if a language is stored in local storage
+    if (storedLanguage) {
+      currentLang = storedLanguage;
+    }
+
+    // Set the selected option in the language selector
+    document.getElementById('lang-selector').value = currentLang;
+
+    updateStaticTexts();
+
+    let currentTest = null;
+    let currentStep = 0;
+    let conversationHistory = [];
+    let radarChart = null;
+    const maxSteps = 3;
+  
+    function startTest(testData, event) {
+      currentTest = testData;
+      currentStep = 0;
+      conversationHistory = [];  // Обнуляем историю беседы
+      document.querySelectorAll('.test-card').forEach(card => card.classList.remove('active'));
+      event.target.closest('.test-card').classList.add('active');
+      document.getElementById('welcome-section').style.display = 'none';
+      document.getElementById('test-interface').style.display = 'block';
+      document.getElementById('result-interface').style.display = 'none';
+      document.getElementById('test-title').textContent = currentTest.name;
+      document.getElementById('conversation').innerHTML = "";
+      document.getElementById('answer-textarea').value = "";
+      askQuestion();
+    }
+  
+    async function askQuestion() {
+      const conversationDiv = document.getElementById("conversation");
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (attempts < maxAttempts) {
+        try {
+          let requestText = currentTest.prompt;
+          if (conversationHistory.length > 0) {
+            requestText += "\n\nИстория общения:\n" +
+              conversationHistory.map(item => `ИИ: ${item.question}\nПользователь: ${item.answer}`).join("\n") +
+              "\n\nСгенерируй следующий вопрос или результат.";
+          } else {
+            requestText += "\n\nСгенерируй свой первый конкретный вопрос.";
+          }
+          const response = await fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + "AIzaSyAc_Rq0fTKmaUP1tYPXS0gjSSFpoFQQHBE",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contents: [{ parts: [{ text: requestText }] }] })
+            }
+          );
+          if (!response.ok) throw new Error("API request failed");
+          const data = await response.json();
+          console.log("Полный ответ от API:", data);
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          console.log("Raw текст ответа:", rawText);
+          const jsonText = extractJsonFromResponse(rawText);
+          const step = JSON.parse(jsonText);
+          if (step.status === "result" && currentStep < maxSteps) {
+            attempts++;
+            await delay(1000);
+            continue;
+          } else if (step.status === "result") {
+            finalResult = step.content;
+            displayResult(step.content);
+            break;
+          } else if (step.status === "progress") {
+            conversationDiv.innerHTML += `<p class="ai-message">${step.content}</p>`;
+            conversationHistory.push({ question: step.content, answer: null });
+            currentStep++;
+            break;
+          }
+        } catch (error) {
+          console.error("Ошибка запроса:", error);
+          attempts++;
+          if (attempts === maxAttempts) {
+            alert("Произошла ошибка при выполнении запроса к API. Тест не может быть завершён. Попробуйте ещё раз.");
+            return;
+          }
+          await delay(1000);
+        }
+      }
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
+    }
+  
+    function extractJsonFromResponse(responseText) {
+      const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) return jsonMatch[1].trim();
+      return responseText.trim();
+    }
+  
+    document.getElementById("next-question-button").addEventListener("click", () => {
+      const answerTextarea = document.getElementById("answer-textarea");
+      const answer = answerTextarea.value.trim();
+      if (!answer) return;
+      const conversationDiv = document.getElementById("conversation");
+      conversationDiv.innerHTML += `<p class="user-message">${answer}</p>`;
+      conversationHistory[conversationHistory.length - 1].answer = answer;
+      answerTextarea.value = "";
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
+      if (currentStep < maxSteps) {
+        askQuestion();
+      } else {
+        fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + "AIzaSyAc_Rq0fTKmaUP1tYPXS0gjSSFpoFQQHBE",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              contents: [{
+                parts: [{
+                  text: currentTest.prompt + "\n\nИстория общения:\n" +
+                        conversationHistory.map(item => `ИИ: ${item.question}\nПользователь: ${item.answer}`).join("\n") +
+                        "\n\nТеперь заверши тест и дай результат."
+                }]
+              }]
+            })
+          }
+        )
+        .then(response => {
+          if (!response.ok) throw new Error("API request failed");
+          return response.json();
+        })
+        .then(data => {
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          const jsonText = extractJsonFromResponse(rawText);
+          const step = JSON.parse(jsonText);
+          if (step.status === "result") {
+            finalResult = step.content;
+            displayResult(step.content);
+          }
+        })
+        .catch(error => {
+          console.error("Ошибка получения результата:", error);
+          alert("Произошла ошибка при получении результата от API. Тест не может быть завершён. Попробуйте ещё раз.");
+        });
+      }
+    });
+  
+    // При показе результатов описание берётся согласно языку страницы
+    function displayResult(result) {
+      console.log("Отображаем результат:", result);
+      document.getElementById("test-interface").style.display = "none";
+      document.getElementById("result-interface").style.display = "block";
+      document.getElementById("result-description").textContent =
+        (result.descriptions && result.descriptions[currentLang]) || "No description.";
+      populateResults(result);
+    }
+  
+    function populateResults(result) {
+      const canvasElement = document.getElementById("radar-chart");
+      if (!canvasElement || canvasElement.tagName !== "CANVAS") {
+        console.error("Ошибка: Элемент canvas с ID 'radar-chart' не найден!");
+        return;
+      }
+      if (radarChart !== null) {
+        radarChart.destroy();
+        radarChart = null;
+      }
+      const ctx = canvasElement.getContext("2d");
+      const labels = Object.keys(result).filter(key => key !== "descriptions");
+      const data = labels.map(label => result[label]);
+      const scores = labels.map(label => [label, result[label]]);
+
+      radarChart = new Chart(ctx, {
+        type: "radar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Your Results",
+            data: data,
+            backgroundColor: "rgba(255, 255, 255, 0.3)",
+            borderColor: "#ffffff",
+            borderWidth: 2,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "#ffffff"
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              min: 1,
+              max: 10,
+              angleLines: { color: "rgba(255,255,255,0.3)" },
+              grid: { color: "rgba(255,255,255,0.2)" },
+              pointLabels: {
+                font: { size: 12 },
+                color: "#ffffff",
+                padding: 20,
+                callback: function(label) {
+                  return label.replace(/_/g, " ").split(" ");
+                }
+              },
+              ticks: {
+                min: 1,
+                max: 10,
+                display: false
+              }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+      const scoresContainer = document.getElementById("scores-container");
+      if (scoresContainer) {
+        scoresContainer.innerHTML = "";
+        if (scores.length > 0) {
+          scores.forEach(([key, value]) => {
+            const scoreCard = document.createElement("div");
+            scoreCard.className = "score-card";
+            scoreCard.innerHTML = `<h4>${key.replace(/_/g, " ")}</h4><p>${value}</p>`;
+            scoresContainer.appendChild(scoreCard);
+          });
+        } else {
+          scoresContainer.innerHTML = '<p style="color: #ffffff;">Could not load scores.</p>';
+        }
+      }
+    }
+  
+    // Функция, показывающая модальное окно для ввода данных пользователя.
+    // Перед показом обновляет текст модального окна согласно выбранному языку страницы.
+    function promptUserData() {
+      return new Promise(resolve => {
+        const modal = document.getElementById('user-data-modal');
+        if (translations[currentLang] && translations[currentLang].modal) {
+          modal.querySelector("h2").textContent = translations[currentLang].modal.header;
+          modal.querySelector("label[for='firstName']").textContent = translations[currentLang].modal.firstName + ":";
+          modal.querySelector("label[for='lastName']").textContent = translations[currentLang].modal.lastName + ":";
+          modal.querySelector("label[for='email']").textContent = translations[currentLang].modal.email;
+          modal.querySelector("label[for='phone']").textContent = translations[currentLang].modal.phone;
+          modal.querySelector("label[for='links']").textContent = translations[currentLang].modal.links;
+          modal.querySelector("#user-data-form button[type='submit']").textContent = translations[currentLang].modal.confirm;
+        }
+        modal.style.display = 'block';
+        const form = document.getElementById('user-data-form');
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const formData = new FormData(form);
+          const data = {
+            firstName: formData.get('firstName') || '',
+            lastName: formData.get('lastName') || '',
+            email: formData.get('email') || '',
+            phone: formData.get('phone') || '',
+            links: formData.get('links') || ''
+          };
+          modal.style.display = 'none';
+          form.reset();
+          resolve(data);
+        }, { once: true });
+      });
+    }
+  
+    // Функция скачивания изображения с формированием карточки с личными данными.
+    // В карточку попадают только заполненные поля, а текст заголовков берётся по языку скачивания.
+    // При языке "he" для карточки устанавливается соответствующий режим текста (RTL).
+    async function downloadImage() {
+      const userData = await promptUserData();
+      const resultInterface = document.getElementById("result-interface");
+      const captureWrapper = document.getElementById("capture-wrapper");
+      const downloadLang = document.getElementById("download-lang-selector").value;
+      
+      // Получаем элемент карточки с данными
+      let userInfoCard = document.getElementById("user-info-card");
+      if (!userInfoCard || userInfoCard.children.length === 0) {
+        if (!userInfoCard) {
+          userInfoCard = document.createElement('div');
+          userInfoCard.id = 'user-info-card';
+          captureWrapper.insertBefore(userInfoCard, captureWrapper.querySelector(".radar-chart-container"));
+        }
+        const nameContainer = document.createElement('div');
+        nameContainer.className = "user-info-left";
+        const rightContainer = document.createElement('div');
+        rightContainer.className = "user-info-right";
+        userInfoCard.appendChild(nameContainer);
+        userInfoCard.appendChild(rightContainer);
+      }
+      
+      // Заполняем левую часть карточки – имя
+      const nameContainer = userInfoCard.querySelector(".user-info-left");
+      nameContainer.innerHTML = `<h2 id="userFullName">${userData.firstName} ${userData.lastName}</h2>`;
+      
+      // Формируем правую часть – контакты
+      let contactsHTML = "";
+      if (userData.email) {
+        contactsHTML += `<p id="userEmailRow" class="contact-row"><i class="fa-solid fa-envelope"></i><span id="userEmail">${userData.email}</span></p>`;
+      }
+      if (userData.phone) {
+        contactsHTML += `<p id="userPhoneRow" class="contact-row"><i class="fa-solid fa-phone"></i><span id="userPhone">${userData.phone}</span></p>`;
+      }
+      if (userData.links) {
+        contactsHTML += `<p id="userLinksRow" class="contact-row"><i class="fa-solid fa-link"></i><span id="userLinks">${userData.links}</span></p>`;
+      }
+      const rightContainer = userInfoCard.querySelector(".user-info-right");
+      rightContainer.innerHTML = contactsHTML;
+      
+      // Устанавливаем направление карточки по языку скачивания
+      if (downloadLang === "he") {
+        userInfoCard.setAttribute("dir", "rtl");
+        userInfoCard.style.textAlign = "right";
+      } else {
+        userInfoCard.setAttribute("dir", "ltr");
+        userInfoCard.style.textAlign = "left";
+      }
+      
+      // Обновляем описание результата согласно выбранному языку скачивания
+      const descriptionElement = document.getElementById("result-description");
+      descriptionElement.textContent =
+        (finalResult.descriptions && finalResult.descriptions[downloadLang]) || "No description.";
+      descriptionElement.style.overflow = "visible";
+  
+      // Добавляем задержку для полной отрисовки текста
+      await delay(500);
+  
+      // Обнуляем заголовок результатов, чтобы не мешать карточке
+      document.getElementById("result-header").textContent = "";
+      
+      const buttonsContainer = captureWrapper.querySelector('.download-section');
+      if (buttonsContainer) { buttonsContainer.style.display = "none"; }
+  
+      // Задаем отступ (margin) для расширения захвата (например, 20px по сторонам)
+      const margin = 20;
+  
+      // Сбрасываем margin и padding обёртки, чтобы не было лишних отступов в изображении
+      captureWrapper.style.margin = "0";
+      captureWrapper.style.padding = "0";
+      
+      // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
+      captureWrapper.style.height = captureWrapper.scrollHeight + "px";
+      
+      // Получаем размеры области захвата
+      const resultRect = captureWrapper.getBoundingClientRect();
+      const scale = 2;
+      // Увеличиваем размеры canvas, добавляя отступы
+      const finalCanvas = document.createElement("canvas");
+      finalCanvas.width = Math.ceil((resultRect.width + margin * 2) * scale);
+      finalCanvas.height = Math.ceil((resultRect.height + margin * 2) * scale);
+      const ctx = finalCanvas.getContext("2d");
+  
+      // Рисуем фон на canvas
+      const gradient = ctx.createLinearGradient(0, 0, finalCanvas.width, finalCanvas.height);
+      gradient.addColorStop(0, "#2c3e50");
+      gradient.addColorStop(1, "#4ca1af");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+  
+      // Функция для захвата элемента с учетом дополнительного отступа
+      async function placeElementAsIs(element, useHtml2canvas = true) {
+        const rect = element.getBoundingClientRect();
+        // Добавляем дополнительное смещение margin (умноженное на scale) к координатам
+        const offsetX = margin * scale + (rect.left - resultRect.left) * scale;
+        const offsetY = margin * scale + (rect.top - resultRect.top) * scale;
+        if (useHtml2canvas) {
+          const subCanvas = await html2canvas(element, { 
+            scale, 
+            backgroundColor: null,
+            scrollY: 0,
+            scrollX: 0 
+          });
+          ctx.drawImage(subCanvas, offsetX, offsetY);
+        } else {
+          const chartImgData = radarChart.toBase64Image("image/png", 1.0);
+          const chartImg = new Image();
+          chartImg.src = chartImgData;
+          await new Promise(resolve => chartImg.onload = resolve);
+          const w = rect.width * scale;
+          const h = rect.height * scale;
+          const shadowCanvas = document.createElement("canvas");
+          shadowCanvas.width = w;
+          shadowCanvas.height = h;
+          const shadowCtx = shadowCanvas.getContext("2d");
+          shadowCtx.fillStyle = "rgba(0, 0, 0, 0.3)";
+          shadowCtx.fillRect(0, 0, w, h);
+          const chartSize = 0.8;
+          const chartOffsetX = w * (1 - chartSize) / 2;
+          const chartOffsetY = h * (1 - chartSize) / 2;
+          shadowCtx.drawImage(chartImg, chartOffsetX, chartOffsetY, w * chartSize, h * chartSize);
+          ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+          ctx.shadowBlur = 20;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 8;
+          ctx.drawImage(shadowCanvas, offsetX, offsetY);
+          ctx.shadowColor = "rgba(0, 0, 0, 0)";
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        }
+      }
+  
+      try {
+        await placeElementAsIs(document.getElementById("user-info-card"), true);
+        await placeElementAsIs(captureWrapper.querySelector(".radar-chart-container"), false);
+        const scoresContainer = captureWrapper.querySelector(".scores-container");
+        scoresContainer.style.width = scoresContainer.offsetWidth + "px";
+        scoresContainer.style.gap = "15px";
+        await delay(200);
+        await placeElementAsIs(scoresContainer, true);
+        descriptionElement.style.width = descriptionElement.offsetWidth + "px";
+        await delay(200);
+        await placeElementAsIs(descriptionElement, true);
+  
+        const imgData = finalCanvas.toDataURL("image/png", 1.0);
+        const link = document.createElement("a");
+        link.href = imgData;
+        link.download = "results.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("Ошибка при создании изображения:", error);
+        alert("Не удалось создать изображение. Проверьте консоль на наличие ошибок.");
+      } finally {
+        const buttonsContainer = captureWrapper.querySelector('.download-section');
+        if (buttonsContainer) buttonsContainer.style.display = "";
+        const scoresContainer = captureWrapper.querySelector(".scores-container");
+        scoresContainer.style.width = "";
+        scoresContainer.style.gap = "";
+        descriptionElement.style.width = "";
+        captureWrapper.style.height = "";
+      }
+    }
+  </script>
+</body>
+  <footer>
+    <p>
+      © InterviewAI 2025 Created and promoted by <a href="https://www.linkedin.com/in/sbdt" target="_blank">Illya Lazarev</a>.
+    </p>
+  </footer>
+</html>
