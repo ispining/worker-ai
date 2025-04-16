@@ -329,6 +329,7 @@
       .radar-chart-container {
         padding: 5px; /* Reduce padding on mobile */
         max-width: 95%; /* Prevent touching edges */
+        margin-bottom: 10px; /* Reduce margin on mobile */
       }
 
       .scores-container {
@@ -1315,8 +1316,8 @@
       if (buttonsContainer) { buttonsContainer.style.display = "none"; }
   
       // Задаем отступ (margin) для расширения захвата (например, 20px по сторонам)
-      const margin = 20;
-  
+      const margin = 5;
+ 
       // Сбрасываем margin и padding обёртки, чтобы не было лишних отступов в изображении
       captureWrapper.style.margin = "0";
       captureWrapper.style.padding = "0";
@@ -1435,4 +1436,3 @@
     </p>
   </footer>
 </html>
-
