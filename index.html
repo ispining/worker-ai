@@ -1252,182 +1252,184 @@
     // В карточку попадают только заполненные поля, а текст заголовков берётся по языку скачивания.
     // При языке "he" для карточки устанавливается соответствующий режим текста (RTL).
     async function downloadImage() {
-      const userData = await promptUserData();
-      const resultInterface = document.getElementById("result-interface");
-      const captureWrapper = document.getElementById("capture-wrapper");
-      const downloadLang = document.getElementById("download-lang-selector").value;
-      
-      // Получаем элемент карточки с данными
-      let userInfoCard = document.getElementById("user-info-card");
-      if (!userInfoCard || userInfoCard.children.length === 0) {
-        if (!userInfoCard) {
-          userInfoCard = document.createElement('div');
-          userInfoCard.id = 'user-info-card';
-          captureWrapper.insertBefore(userInfoCard, captureWrapper.querySelector(".radar-chart-container"));
-        }
-        const nameContainer = document.createElement('div');
-        nameContainer.className = "user-info-left";
-        const rightContainer = document.createElement('div');
-        rightContainer.className = "user-info-right";
-        userInfoCard.appendChild(nameContainer);
-        userInfoCard.appendChild(rightContainer);
-      }
-      
-      // Заполняем левую часть карточки – имя
-      const nameContainer = userInfoCard.querySelector(".user-info-left");
-      nameContainer.innerHTML = `<h2 id="userFullName">${userData.firstName} ${userData.lastName}</h2>`;
-      
-      // Формируем правую часть – контакты
-      let contactsHTML = "";
-      if (userData.email) {
-        contactsHTML += `<p id="userEmailRow" class="contact-row"><i class="fa-solid fa-envelope"></i><span id="userEmail">${userData.email}</span></p>`;
-      }
-      if (userData.phone) {
-        contactsHTML += `<p id="userPhoneRow" class="contact-row"><i class="fa-solid fa-phone"></i><span id="userPhone">${userData.phone}</span></p>`;
-      }
-      if (userData.links) {
-        contactsHTML += `<p id="userLinksRow" class="contact-row"><i class="fa-solid fa-link"></i><span id="userLinks">${userData.links}</span></p>`;
-      }
-      const rightContainer = userInfoCard.querySelector(".user-info-right");
-      rightContainer.innerHTML = contactsHTML;
-      
-      // Устанавливаем направление карточки по языку скачивания
-      if (downloadLang === "he") {
-        userInfoCard.setAttribute("dir", "rtl");
-        userInfoCard.style.textAlign = "right";
-      } else {
-        userInfoCard.setAttribute("dir", "ltr");
-        userInfoCard.style.textAlign = "left";
-      }
-      
-      // Обновляем описание результата согласно выбранному языку скачивания
-      const descriptionElement = document.getElementById("result-description");
-      descriptionElement.textContent =
-        (finalResult.descriptions && finalResult.descriptions[downloadLang]) || "No description.";
-      descriptionElement.style.overflow = "visible";
-  
-      // Добавляем задержку для полной отрисовки текста
-      await delay(500);
-  
-      // Обнуляем заголовок результатов, чтобы не мешать карточке
-      document.getElementById("result-header").textContent = "";
-      
-      const buttonsContainer = captureWrapper.querySelector('.download-section');
-      if (buttonsContainer) { buttonsContainer.style.display = "none"; }
-  
-      // Задаем отступ (margin) для расширения захвата (например, 20px по сторонам)
-      const margin = 5;
+     const userData = await promptUserData();
+     const resultInterface = document.getElementById("result-interface");
+     const captureWrapper = document.getElementById("capture-wrapper");
+     const downloadLang = document.getElementById("download-lang-selector").value;
+   
+     // Получаем элемент карточки с данными
+     let userInfoCard = document.getElementById("user-info-card");
+     if (!userInfoCard || userInfoCard.children.length === 0) {
+       if (!userInfoCard) {
+         userInfoCard = document.createElement('div');
+         userInfoCard.id = 'user-info-card';
+         captureWrapper.insertBefore(userInfoCard, captureWrapper.querySelector(".radar-chart-container"));
+       }
+       const nameContainer = document.createElement('div');
+       nameContainer.className = "user-info-left";
+       const rightContainer = document.createElement('div');
+       rightContainer.className = "user-info-right";
+       userInfoCard.appendChild(nameContainer);
+       userInfoCard.appendChild(rightContainer);
+     }
+   
+     // Заполняем левую часть карточки – имя
+     const nameContainer = userInfoCard.querySelector(".user-info-left");
+     nameContainer.innerHTML = `<h2 id="userFullName">${userData.firstName} ${userData.lastName}</h2>`;
+   
+     // Формируем правую часть – контакты
+     let contactsHTML = "";
+     if (userData.email) {
+       contactsHTML += `<p id="userEmailRow" class="contact-row"><i class="fa-solid fa-envelope"></i><span id="userEmail">${userData.email}</span></p>`;
+     }
+     if (userData.phone) {
+       contactsHTML += `<p id="userPhoneRow" class="contact-row"><i class="fa-solid fa-phone"></i><span id="userPhone">${userData.phone}</span></p>`;
+     }
+     if (userData.links) {
+       contactsHTML += `<p id="userLinksRow" class="contact-row"><i class="fa-solid fa-link"></i><span id="userLinks">${userData.links}</span></p>`;
+     }
+     const rightContainer = userInfoCard.querySelector(".user-info-right");
+     rightContainer.innerHTML = contactsHTML;
+   
+     // Устанавливаем направление карточки по языку скачивания
+     if (downloadLang === "he") {
+       userInfoCard.setAttribute("dir", "rtl");
+       userInfoCard.style.textAlign = "right";
+     } else {
+       userInfoCard.setAttribute("dir", "ltr");
+       userInfoCard.style.textAlign = "left";
+     }
+   
+     // Обновляем описание результата согласно выбранному языку скачивания
+     const descriptionElement = document.getElementById("result-description");
+     descriptionElement.textContent =
+       (finalResult.descriptions && finalResult.descriptions[downloadLang]) || "No description.";
+     descriptionElement.style.overflow = "visible";
  
-      // Сбрасываем margin и padding обёртки, чтобы не было лишних отступов в изображении
-      captureWrapper.style.margin = "0";
-      captureWrapper.style.padding = "0";
-      
-      // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
-      //captureWrapper.style.height = captureWrapper.scrollHeight + "px";
-      captureWrapper.style.height = captureWrapper.offsetHeight + "px";
-      
-      // Получаем размеры области захвата
-      const resultRect = captureWrapper.getBoundingClientRect();
-      const scale = 2;
-      // Увеличиваем размеры canvas, добавляя отступы
-      const finalCanvas = document.createElement("canvas");
-      finalCanvas.width = Math.ceil((resultRect.width + margin * 2) * scale);
-      finalCanvas.height = Math.ceil((resultRect.height + margin * 2) * scale);
-      const ctx = finalCanvas.getContext("2d");
-  
-      // Рисуем фон на canvas
-      const gradient = ctx.createLinearGradient(0, 0, finalCanvas.width, finalCanvas.height);
-      gradient.addColorStop(0, "#2c3e50");
-      gradient.addColorStop(1, "#4ca1af");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-  
-      // Функция для захвата элемента с учетом дополнительного отступа
-      async function placeElementAsIs(element, useHtml2canvas = true) {
-        const rect = element.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        // Добавляем дополнительное смещение margin (умноженное на scale) к координатам
-        const offsetX = margin * scale + (rect.left - resultRect.left) * scale;
-        const offsetY = margin * scale + (rect.top - resultRect.top) * scale;
-        if (useHtml2canvas) {
-          const subCanvas = await html2canvas(element, {
-            scale,
-            backgroundColor: null,
-            scrollY: 0,
-            scrollX: 0,
-            // Add this to account for device pixel ratio
-            //width: rect.width,
-            //height: rect.height,
-            //windowWidth: rect.width * dpr,
-            //windowHeight: rect.height * dpr,
-            //devicePixelRatio: dpr,
-          });
-          ctx.drawImage(subCanvas, offsetX, offsetY);
-        } else {
-          const chartImgData = radarChart.toBase64Image("image/png", 1.0);
-          const chartImg = new Image();
-          chartImg.src = chartImgData;
-          await new Promise(resolve => chartImg.onload = resolve);
-          const chartWidth = radarChart.canvas.width;
-          const chartHeight = radarChart.canvas.height;
-          const aspectRatio = chartWidth / chartHeight;
-          const w = rect.width * scale;
-          const h = w / aspectRatio; // Calculate height based on aspect ratio
-          const shadowCanvas = document.createElement("canvas");
-          shadowCanvas.width = w;
-          shadowCanvas.height = h;
-          const shadowCtx = shadowCanvas.getContext("2d");
-          shadowCtx.fillStyle = "rgba(0, 0, 0, 0.3)";
-          shadowCtx.fillRect(0, 0, w, h);
-          const chartSize = 0.8;
-          const chartOffsetX = w * (1 - chartSize) / 2;
-          const chartOffsetY = h * (1 - chartSize) / 2;
-          shadowCtx.drawImage(chartImg, chartOffsetX, chartOffsetY, w * chartSize, h * chartSize);
-          ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
-          ctx.shadowBlur = 20;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 8;
-          ctx.drawImage(shadowCanvas, offsetX, offsetY);
-          ctx.shadowColor = "rgba(0, 0, 0, 0)";
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-        }
-      }
-  
-      try {
-        await placeElementAsIs(document.getElementById("user-info-card"), true);
-        await placeElementAsIs(captureWrapper.querySelector(".radar-chart-container"), false);
-        const scoresContainer = captureWrapper.querySelector(".scores-container");
-        scoresContainer.style.width = scoresContainer.offsetWidth + "px";
-        scoresContainer.style.gap = "15px";
-        await delay(200);
-        await placeElementAsIs(scoresContainer, true);
-        descriptionElement.style.width = descriptionElement.offsetWidth + "px";
-        await delay(200);
-        await placeElementAsIs(descriptionElement, true);
-  
-        const imgData = finalCanvas.toDataURL("image/png", 1.0);
-        const link = document.createElement("a");
-        link.href = imgData;
-        link.download = "results.png";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (error) {
-        console.error("Ошибка при создании изображения:", error);
-        alert("Не удалось создать изображение. Проверьте консоль на наличие ошибок.");
-      } finally {
-        const buttonsContainer = captureWrapper.querySelector('.download-section');
-        if (buttonsContainer) buttonsContainer.style.display = "";
-        const scoresContainer = captureWrapper.querySelector(".scores-container");
-        scoresContainer.style.width = "";
-        scoresContainer.style.gap = "";
-        descriptionElement.style.width = "";
-        captureWrapper.style.height = "";
-        captureWrapper.style.width = "";
-      }
-    }
+     // Добавляем задержку для полной отрисовки текста
+     await delay(500);
+ 
+     // Обнуляем заголовок результатов, чтобы не мешать карточке
+     document.getElementById("result-header").textContent = "";
+   
+     const buttonsContainer = captureWrapper.querySelector('.download-section');
+     if (buttonsContainer) { buttonsContainer.style.display = "none"; }
+ 
+     // Задаем отступ (margin) для расширения захвата (например, 20px по сторонам)
+     const margin = 5;
+
+     // Сбрасываем margin и padding обёртки, чтобы не было лишних отступов в изображении
+     captureWrapper.style.margin = "0";
+     captureWrapper.style.padding = "0";
+   
+     // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
+     //captureWrapper.style.height = captureWrapper.scrollHeight + "px";
+     captureWrapper.style.height = captureWrapper.offsetHeight + "px";
+   
+     // Получаем размеры области захвата
+     const resultRect = captureWrapper.getBoundingClientRect();
+     const scale = 2;
+     // Увеличиваем размеры canvas, добавляя отступы
+     const finalCanvas = document.createElement("canvas");
+     finalCanvas.width = Math.ceil((resultRect.width + margin * 2) * scale);
+     finalCanvas.height = Math.ceil((resultRect.height + margin * 2) * scale);
+     const ctx = finalCanvas.getContext("2d");
+ 
+     // Рисуем фон на canvas
+     const gradient = ctx.createLinearGradient(0, 0, finalCanvas.width, finalCanvas.height);
+     gradient.addColorStop(0, "#2c3e50");
+     gradient.addColorStop(1, "#4ca1af");
+     ctx.fillStyle = gradient;
+     ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+ 
+     // Функция для захвата элемента с учетом дополнительного отступа
+     let currentY = margin * scale;
+     async function placeElementAsIs(element, useHtml2canvas = true) {
+       const rect = element.getBoundingClientRect();
+       const dpr = window.devicePixelRatio || 1;
+       // Добавляем дополнительное смещение margin (умноженное на scale) к координатам
+       const offsetX = margin * scale + (rect.left - resultRect.left) * scale;
+       let offsetY = currentY;
+       if (useHtml2canvas) {
+         const subCanvas = await html2canvas(element, {
+           scale,
+           backgroundColor: null,
+           scrollY: 0,
+           scrollX: 0,
+           // Add this to account for device pixel ratio
+           //width: rect.width,
+           //height: rect.height,
+           //windowWidth: rect.width * dpr,
+           //windowHeight: rect.height * dpr,
+           //devicePixelRatio: dpr,
+         });
+         ctx.drawImage(subCanvas, offsetX, offsetY);
+         currentY += rect.height * scale + margin * scale;
+       } else {
+         const chartImgData = radarChart.toBase64Image("image/png", 1.0);
+         const chartImg = new Image();
+         chartImg.src = chartImgData;
+         await new Promise(resolve => chartImg.onload = resolve);
+         const chartWidth = radarChart.canvas.width;
+         const chartHeight = radarChart.canvas.height;
+         const aspectRatio = chartWidth / chartHeight;
+         const w = rect.width * scale;
+         const h = w / aspectRatio; // Calculate height based on aspect ratio
+         const shadowCanvas = document.createElement("canvas");
+         shadowCanvas.width = w;
+         shadowCanvas.height = h;
+         const shadowCtx = shadowCanvas.getContext("2d");
+         shadowCtx.fillStyle = "rgba(0, 0, 0, 0.3)";
+         shadowCtx.fillRect(0, 0, w, h);
+         const chartSize = 0.8;
+         const chartOffsetX = w * (1 - chartSize) / 2;
+         const chartOffsetY = h * (1 - chartSize) / 2;
+         shadowCtx.drawImage(chartImg, chartOffsetX, chartOffsetY, w * chartSize, h * chartSize);
+         ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+         ctx.shadowBlur = 20;
+         ctx.shadowOffsetX = 0;
+         ctx.shadowOffsetY = 8;
+         ctx.drawImage(shadowCanvas, offsetX, offsetY);
+         ctx.shadowColor = "rgba(0, 0, 0, 0)";
+         ctx.shadowBlur = 0;
+         ctx.shadowOffsetX = 0;
+         ctx.shadowOffsetY = 0;
+       }
+     }
+ 
+     try {
+       await placeElementAsIs(document.getElementById("user-info-card"), true);
+       await placeElementAsIs(captureWrapper.querySelector(".radar-chart-container"), false);
+       const scoresContainer = captureWrapper.querySelector(".scores-container");
+       scoresContainer.style.width = scoresContainer.offsetWidth + "px";
+       scoresContainer.style.gap = "15px";
+       await delay(200);
+       await placeElementAsIs(scoresContainer, true);
+       descriptionElement.style.width = descriptionElement.offsetWidth + "px";
+       await delay(200);
+       await placeElementAsIs(descriptionElement, true);
+ 
+       const imgData = finalCanvas.toDataURL("image/png", 1.0);
+       const link = document.createElement("a");
+       link.href = imgData;
+       link.download = "results.png";
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+     } catch (error) {
+       console.error("Ошибка при создании изображения:", error);
+       alert("Не удалось создать изображение. Проверьте консоль на наличие ошибок.");
+     } finally {
+       const buttonsContainer = captureWrapper.querySelector('.download-section');
+       if (buttonsContainer) buttonsContainer.style.display = "";
+       const scoresContainer = captureWrapper.querySelector(".scores-container");
+       scoresContainer.style.width = "";
+       scoresContainer.style.gap = "";
+       descriptionElement.style.width = "";
+       captureWrapper.style.height = "";
+       captureWrapper.style.width = "";
+     }
+   }
   </script>
 </body>
   <footer>
@@ -1436,3 +1438,4 @@
     </p>
   </footer>
 </html>
+
