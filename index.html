@@ -1314,7 +1314,8 @@
       captureWrapper.style.padding = "0";
       
       // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
-      captureWrapper.style.height = captureWrapper.scrollHeight + "px";
+      //captureWrapper.style.height = captureWrapper.scrollHeight + "px";
+      captureWrapper.style.height = captureWrapper.offsetHeight + "px";
       
       // Получаем размеры области захвата
       const resultRect = captureWrapper.getBoundingClientRect();
@@ -1405,6 +1406,7 @@
         scoresContainer.style.gap = "";
         descriptionElement.style.width = "";
         captureWrapper.style.height = "";
+        captureWrapper.style.width = "";
       }
     }
   </script>
