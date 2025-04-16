@@ -154,7 +154,7 @@
       text-align: center;
       background: linear-gradient(135deg, #2c3e50, #4ca1af);
       border-radius: 10px;
-      padding: 40px 20px;
+      padding: 20px 10px;
       color: #ffffff;
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
       animation: fadeIn 0.8s ease-in-out;
@@ -169,7 +169,7 @@
     .radar-chart-container {
       max-width: 500px;
       width: 100%; /* Allow shrinking below max-width */
-      margin: 0 auto 30px;
+      margin: 0 auto 10px;
       background: rgba(0,0,0,0.3);
       padding: 30px;
       border-radius: 15px;
@@ -181,7 +181,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
     }
     .score-card {
       background: rgba(255,255,255,0.15);
@@ -209,7 +209,7 @@
       color: #ffffff;
     }
     #result-description {
-      margin-top: 20px;
+      margin-top: 0px;
       padding: 20px;
       background: rgba(255,255,253,0.2);
       border-radius: 10px;
@@ -1320,7 +1320,7 @@
       
       // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
       //captureWrapper.style.height = captureWrapper.scrollHeight + "px";
-      captureWrapper.style.height = captureWrapper.offsetHeight + "px";
+      captureWrapper.style.height = "auto";
       
       // Получаем размеры области захвата
       const resultRect = captureWrapper.getBoundingClientRect();
@@ -1427,3 +1427,9 @@
   </script>
 </body>
   <footer>
+    <p>
+      © InterviewAI 2025 Created and promoted by <a href="https://www.linkedin.com/in/sbdt" target="_blank">Illya Lazarev</a>.
+    </p>
+  </footer>
+</html>
+
