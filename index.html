@@ -154,7 +154,7 @@
       text-align: center;
       background: linear-gradient(135deg, #2c3e50, #4ca1af);
       border-radius: 10px;
-      padding: 20px 10px;
+      padding: 40px 20px;
       color: #ffffff;
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
       animation: fadeIn 0.8s ease-in-out;
@@ -169,7 +169,7 @@
     .radar-chart-container {
       max-width: 500px;
       width: 100%; /* Allow shrinking below max-width */
-      margin: 0 auto 10px;
+      margin: 0 auto 30px;
       background: rgba(0,0,0,0.3);
       padding: 30px;
       border-radius: 15px;
@@ -181,7 +181,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 15px;
-      margin-bottom: 10px;
+      margin-bottom: 30px;
     }
     .score-card {
       background: rgba(255,255,255,0.15);
@@ -209,7 +209,7 @@
       color: #ffffff;
     }
     #result-description {
-      margin-top: 0px;
+      margin-top: 20px;
       padding: 20px;
       background: rgba(255,255,253,0.2);
       border-radius: 10px;
@@ -335,11 +335,6 @@
         line-height: 1.3; /* Adjust line spacing */
         font-size: 14px; /* Adjust font size */
         height: 80px; /* Adjust height */
-      }
-    }
-    @media (max-width: 768px) {
-      .score-card {
-        padding: 8px;
       }
     }
     @keyframes fadeIn {
@@ -1252,177 +1247,240 @@
       const resultInterface = document.getElementById("result-interface");
       const captureWrapper = document.getElementById("capture-wrapper");
       const downloadLang = document.getElementById("download-lang-selector").value;
-      
-      // Получаем элемент карточки с данными
+
+      // --- Prepare the capture wrapper ---
+      // Get/create user info card
       let userInfoCard = document.getElementById("user-info-card");
       if (!userInfoCard || userInfoCard.children.length === 0) {
         if (!userInfoCard) {
           userInfoCard = document.createElement('div');
           userInfoCard.id = 'user-info-card';
+          // Insert before the radar chart container
           captureWrapper.insertBefore(userInfoCard, captureWrapper.querySelector(".radar-chart-container"));
         }
-        const nameContainer = document.createElement('div');
-        nameContainer.className = "user-info-left";
-        const rightContainer = document.createElement('div');
-        rightContainer.className = "user-info-right";
-        userInfoCard.appendChild(nameContainer);
-        userInfoCard.appendChild(rightContainer);
-      }
-      
-      // Заполняем левую часть карточки – имя
-      const nameContainer = userInfoCard.querySelector(".user-info-left");
-      nameContainer.innerHTML = `<h2 id="userFullName">${userData.firstName} ${userData.lastName}</h2>`;
-      
-      // Формируем правую часть – контакты
-      let contactsHTML = "";
-      if (userData.email) {
-        contactsHTML += `<p id="userEmailRow" class="contact-row"><i class="fa-solid fa-envelope"></i><span id="userEmail">${userData.email}</span></p>`;
-      }
-      if (userData.phone) {
-        contactsHTML += `<p id="userPhoneRow" class="contact-row"><i class="fa-solid fa-phone"></i><span id="userPhone">${userData.phone}</span></p>`;
-      }
-      if (userData.links) {
-        contactsHTML += `<p id="userLinksRow" class="contact-row"><i class="fa-solid fa-link"></i><span id="userLinks">${userData.links}</span></p>`;
-      }
-      const rightContainer = userInfoCard.querySelector(".user-info-right");
-      rightContainer.innerHTML = contactsHTML;
-      
-      // Устанавливаем направление карточки по языку скачивания
-      if (downloadLang === "he") {
-        userInfoCard.setAttribute("dir", "rtl");
-        userInfoCard.style.textAlign = "right";
-      } else {
-        userInfoCard.setAttribute("dir", "ltr");
-        userInfoCard.style.textAlign = "left";
-      }
-      
-      // Обновляем описание результата согласно выбранному языку скачивания
-      const descriptionElement = document.getElementById("result-description");
-      descriptionElement.textContent =
-        (finalResult.descriptions && finalResult.descriptions[downloadLang]) || "No description.";
-      descriptionElement.style.overflow = "visible";
-  
-      // Добавляем задержку для полной отрисовки текста
-      await delay(500);
-  
-      // Обнуляем заголовок результатов, чтобы не мешать карточке
-      document.getElementById("result-header").textContent = "";
-      
-      const buttonsContainer = captureWrapper.querySelector('.download-section');
-      if (buttonsContainer) { buttonsContainer.style.display = "none"; }
-  
-      // Задаем отступ (margin) для расширения захвата (например, 20px по сторонам)
-      const margin = 20;
-  
-      // Сбрасываем margin и padding обёртки, чтобы не было лишних отступов в изображении
-      captureWrapper.style.margin = "0";
-      captureWrapper.style.padding = "0";
-      
-      // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
-      //captureWrapper.style.height = captureWrapper.scrollHeight + "px";
-      captureWrapper.style.height = "auto";
-      captureWrapper.style.width = "auto";
-      
-      // Получаем размеры области захвата
-      const resultRect = captureWrapper.getBoundingClientRect();
-      const scale = 1;
-      // Увеличиваем размеры canvas, добавляя отступы
-      const finalCanvas = document.createElement("canvas");
-      finalCanvas.width = Math.ceil((resultRect.width + margin * 2) * scale);
-      finalCanvas.height = Math.ceil((resultRect.height + margin * 2) * scale);
-      const ctx = finalCanvas.getContext("2d");
-  
-      // Рисуем фон на canvas
-      const gradient = ctx.createLinearGradient(0, 0, finalCanvas.width, finalCanvas.height);
-      gradient.addColorStop(0, "#2c3e50");
-      gradient.addColorStop(1, "#4ca1af");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-  
-      // Функция для захвата элемента с учетом дополнительного отступа
-      async function placeElementAsIs(element, useHtml2canvas = true) {
-        const rect = element.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        // Добавляем дополнительное смещение margin (умноженное на scale) к координатам
-        const offsetX = margin * scale + (rect.left - resultRect.left) * scale;
-        const offsetY = margin * scale + (rect.top - resultRect.top) * scale;
-        if (useHtml2canvas) {
-          const subCanvas = await html2canvas(element, {
-            scale,
-            backgroundColor: null,
-            scrollY: 0,
-            scrollX: 0,
-            // Add this to account for device pixel ratio
-            //width: rect.width,
-            //height: rect.height,
-            //windowWidth: rect.width * dpr,
-            //windowHeight: rect.height * dpr,
-            //devicePixelRatio: dpr,
-          });
-          ctx.drawImage(subCanvas, offsetX, offsetY);
-        } else {
-          const chartImgData = radarChart.toBase64Image("image/png", 1.0);
-          const chartImg = new Image();
-          chartImg.src = chartImgData;
-          await new Promise(resolve => chartImg.onload = resolve);
-          const chartWidth = radarChart.canvas.width;
-          const chartHeight = radarChart.canvas.height;
-          const aspectRatio = chartWidth / chartHeight;
-          const w = rect.width * scale;
-          const h = w / aspectRatio; // Calculate height based on aspect ratio
-          const shadowCanvas = document.createElement("canvas");
-          shadowCanvas.width = w;
-          shadowCanvas.height = h;
-          const shadowCtx = shadowCanvas.getContext("2d");
-          shadowCtx.fillStyle = "rgba(0, 0, 0, 0.3)";
-          shadowCtx.fillRect(0, 0, w, h);
-          const chartSize = 0.8;
-          const chartOffsetX = w * (1 - chartSize) / 2;
-          const chartOffsetY = h * (1 - chartSize) / 2;
-          shadowCtx.drawImage(chartImg, chartOffsetX, chartOffsetY, w * chartSize, h * chartSize);
-          ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
-          ctx.shadowBlur = 20;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 8;
-          ctx.drawImage(shadowCanvas, offsetX, offsetY);
-          ctx.shadowColor = "rgba(0, 0, 0, 0)";
-          ctx.shadowBlur = 0;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
+        // Ensure left/right containers exist if card was just created
+        if (!userInfoCard.querySelector(".user-info-left")) {
+          const nameContainer = document.createElement('div');
+          nameContainer.className = "user-info-left";
+          userInfoCard.appendChild(nameContainer);
+        }
+        if (!userInfoCard.querySelector(".user-info-right")) {
+          const rightContainer = document.createElement('div');
+          rightContainer.className = "user-info-right";
+          userInfoCard.appendChild(rightContainer);
         }
       }
-  
+
+      // Populate user info card
+      const nameContainer = userInfoCard.querySelector(".user-info-left");
+      nameContainer.innerHTML = `<h2 id="userFullName">${userData.firstName} ${userData.lastName}</h2>`;
+
+      let contactsHTML = "";
+      if (userData.email) contactsHTML += `<p id="userEmailRow" class="contact-row"><i class="fa-solid fa-envelope"></i><span id="userEmail">${userData.email}</span></p>`;
+      if (userData.phone) contactsHTML += `<p id="userPhoneRow" class="contact-row"><i class="fa-solid fa-phone"></i><span id="userPhone">${userData.phone}</span></p>`;
+      if (userData.links) contactsHTML += `<p id="userLinksRow" class="contact-row"><i class="fa-solid fa-link"></i><span id="userLinks">${userData.links}</span></p>`;
+      const rightContainer = userInfoCard.querySelector(".user-info-right");
+      rightContainer.innerHTML = contactsHTML;
+
+      // Set card direction based on download language
+      userInfoCard.setAttribute("dir", downloadLang === "he" ? "rtl" : "ltr");
+      userInfoCard.style.textAlign = downloadLang === "he" ? "right" : "left";
+
+      // Update result description based on download language
+      const descriptionElement = document.getElementById("result-description");
+      descriptionElement.textContent = (finalResult.descriptions && finalResult.descriptions[downloadLang]) || "No description.";
+
+      // Hide result header and download buttons temporarily
+      const resultHeader = document.getElementById("result-header");
+      const originalHeaderDisplay = resultHeader.style.display;
+      resultHeader.style.display = "none"; // Hide header to avoid overlap
+
+      const buttonsContainer = captureWrapper.querySelector('.download-section');
+      const originalButtonsDisplay = buttonsContainer ? buttonsContainer.style.display : '';
+      if (buttonsContainer) buttonsContainer.style.display = "none";
+
+      // --- Temporarily set fixed width and increase fonts directly ---
+      const originalWrapperWidth = captureWrapper.style.width;
+      const originalWrapperMaxWidth = captureWrapper.style.maxWidth;
+      const targetCaptureWidth = '800px'; // Adjust this value as needed
+
+      captureWrapper.style.width = targetCaptureWidth;
+      captureWrapper.style.maxWidth = targetCaptureWidth;
+      captureWrapper.style.height = 'auto'; // Ensure height adjusts
+      captureWrapper.style.padding = '20px';
+
+      // Store original styles and apply temporary larger font sizes
+      const elementsToStyle = [
+        // Significantly larger fonts this time
+        { selector: '#user-info-card .user-info-left h2', style: 'fontSize', value: '2.5rem' }, // Much larger name
+        { selector: '#user-info-card .user-info-right .contact-row', style: 'fontSize', value: '1.5rem', multiple: true }, // Larger contacts
+        { selector: '.score-card h4', style: 'fontSize', value: '16px', multiple: true }, // Slightly reduced score title font for capture
+        { selector: '.score-card p', style: 'fontSize', value: '22px', multiple: true }, // Larger score values
+        { selector: '#result-description', style: 'fontSize', value: '20px' }, // Larger description
+        { selector: '#result-description', style: 'lineHeight', value: '1.6' }
+      ];
+      const originalStyles = [];
+
+      // Apply font/lineHeight styles first
+      elementsToStyle.forEach(item => {
+        const nodes = item.multiple ? captureWrapper.querySelectorAll(item.selector) : [captureWrapper.querySelector(item.selector)];
+        nodes.forEach(node => {
+          if (node) {
+            originalStyles.push({ node: node, style: item.style, originalValue: node.style[item.style] });
+            node.style[item.style] = item.value;
+          }
+        });
+      });
+
+      // --- Also temporarily adjust container widths AND score card internal layout ---
+      const userInfoCardElem = captureWrapper.querySelector('#user-info-card');
+      const chartContainer = captureWrapper.querySelector('.radar-chart-container');
+      const scoresContainerElem = captureWrapper.querySelector('.scores-container');
+      const scoreCardElems = captureWrapper.querySelectorAll('.score-card');
+
+      let originalUserInfoWidth = '', originalChartMaxWidth = '', originalScoresWidth = '';
+      let originalScoreCardBasis = []; // Store original basis for each card
+
+      if (userInfoCardElem) {
+          originalUserInfoWidth = userInfoCardElem.style.width;
+          userInfoCardElem.style.width = '98%'; // Widen user info card
+      }
+      if (chartContainer) {
+          originalChartMaxWidth = chartContainer.style.maxWidth;
+          // Remove the previous reduction, let it take available space or set near 100%
+          chartContainer.style.maxWidth = '98%'; // Widen chart container
+      }
+       if (scoresContainerElem) {
+           originalScoresWidth = scoresContainerElem.style.width;
+           const originalScoresFlexWrap = scoresContainerElem.style.flexWrap; // Store original flex-wrap
+           scoresContainerElem.style.width = '98%'; // Widen scores container
+           scoresContainerElem.style.flexWrap = 'nowrap'; // Force single row
+       }
+       scoreCardElems.forEach((card, index) => {
+           originalScoreCardBasis[index] = card.style.flexBasis;
+           // Calculate basis to fit all cards in one row (adjust percentage as needed for gaps)
+           const numberOfCards = scoreCardElems.length || 1; // Avoid division by zero
+           // Reduce percentage again to ensure alignment with gaps
+           const basisPercentage = Math.floor(98 / numberOfCards) - 4; // e.g., 98/5 = 19.6 -> 19 - 4 = 15%
+           card.style.flexBasis = `${basisPercentage}%`;
+           card.style.flexShrink = '0'; // Prevent shrinking
+
+           // Add temporary styles for internal score card layout
+           originalStyles.push({ node: card, style: 'display', originalValue: card.style.display });
+           originalStyles.push({ node: card, style: 'flexDirection', originalValue: card.style.flexDirection });
+           originalStyles.push({ node: card, style: 'alignItems', originalValue: card.style.alignItems });
+           originalStyles.push({ node: card, style: 'justifyContent', originalValue: card.style.justifyContent });
+           originalStyles.push({ node: card, style: 'minHeight', originalValue: card.style.minHeight });
+
+           card.style.display = 'flex';
+           card.style.flexDirection = 'column';
+           card.style.alignItems = 'center';
+           card.style.justifyContent = 'center'; // Center title and score vertically
+           card.style.minHeight = '90px'; // Give enough height for wrapping (adjust if needed)
+
+           // Explicitly center text within h4 and p during capture
+           const h4 = card.querySelector('h4');
+           const p = card.querySelector('p');
+           if (h4) {
+             originalStyles.push({ node: h4, style: 'textAlign', originalValue: h4.style.textAlign });
+             h4.style.textAlign = 'center';
+           }
+           if (p) {
+             originalStyles.push({ node: p, style: 'textAlign', originalValue: p.style.textAlign });
+             p.style.textAlign = 'center';
+           }
+       });
+
+
+    // Allow time for layout adjustments with new styles and widths
+    await delay(600); // Slightly longer delay for complex changes
+
+      // --- Capture the prepared wrapper ---
+      const scale = 2; // Capture at higher resolution
+      const margin = 20 * scale; // Margin for the final image in scaled pixels
+      let capturedCanvas;
       try {
-        await placeElementAsIs(document.getElementById("user-info-card"), true);
-        await placeElementAsIs(captureWrapper.querySelector(".radar-chart-container"), false);
-        const scoresContainer = captureWrapper.querySelector(".scores-container");
-        scoresContainer.style.width = scoresContainer.offsetWidth + "px";
-        scoresContainer.style.gap = "15px";
-        await delay(200);
-        await placeElementAsIs(scoresContainer, true);
-        descriptionElement.style.width = descriptionElement.offsetWidth + "px";
-        await delay(200);
-        await placeElementAsIs(descriptionElement, true);
-  
+        capturedCanvas = await html2canvas(captureWrapper, {
+          scale: scale,
+          backgroundColor: null, // Use transparent background for capture
+          useCORS: true, // Enable CORS if needed for images/fonts
+          logging: true, // Enable logging for debugging
+          onclone: (clonedDoc) => {
+            // Optional: Apply specific styles only during cloning/capture if needed
+            const clonedWrapper = clonedDoc.getElementById('capture-wrapper');
+            if (clonedWrapper) {
+              clonedWrapper.style.height = 'auto'; // Ensure height is auto in clone
+              clonedWrapper.style.padding = '20px';
+            }
+          }
+        });
+      } catch (error) {
+        console.error("html2canvas capture failed:", error);
+        alert("Failed to capture the results area. Please check the console for errors.");
+        // Restore original styles before returning
+        if (buttonsContainer) buttonsContainer.style.display = originalButtonsDisplay;
+        resultHeader.style.display = originalHeaderDisplay;
+        captureWrapper.style.height = originalWrapperHeight;
+        captureWrapper.style.padding = ''; // Reset padding
+        return; // Exit if capture fails
+      }
+
+      // --- Restore original styles ---
+      if (buttonsContainer) buttonsContainer.style.display = originalButtonsDisplay;
+      resultHeader.style.display = originalHeaderDisplay;
+      // Restore original width/height/padding
+      captureWrapper.style.width = originalWrapperWidth;
+      captureWrapper.style.maxWidth = originalWrapperMaxWidth;
+      captureWrapper.style.height = '';
+      captureWrapper.style.padding = '';
+
+      // Restore original inline styles for fonts
+      originalStyles.forEach(item => {
+        item.node.style[item.style] = item.originalValue;
+      });
+
+      // Restore original container widths and score card basis
+       if (userInfoCardElem) userInfoCardElem.style.width = originalUserInfoWidth;
+       if (chartContainer) chartContainer.style.maxWidth = originalChartMaxWidth;
+       if (scoresContainerElem) scoresContainerElem.style.width = originalScoresWidth;
+       // Restore score card basis AND internal layout styles (display, flexDirection etc.)
+       // Note: The main loop for originalStyles already handles restoring these
+       scoreCardElems.forEach((card, index) => {
+           // Only restore flexBasis here if it wasn't added to originalStyles array
+           // card.style.flexBasis = originalScoreCardBasis[index]; // Already handled by main loop
+           card.style.flexShrink = ''; // Restore default shrink behavior if not in originalStyles
+       });
+
+
+      // --- Create the final image canvas ---
+      const finalCanvas = document.createElement("canvas");
+      // Set final canvas size including margins
+      finalCanvas.width = capturedCanvas.width + margin * 2;
+      finalCanvas.height = capturedCanvas.height + margin * 2;
+      const ctx = finalCanvas.getContext("2d");
+
+      // Draw background gradient on the final canvas
+      const gradient = ctx.createLinearGradient(0, 0, finalCanvas.width, finalCanvas.height);
+      gradient.addColorStop(0, "#2c3e50"); // Dark blue-grey
+      gradient.addColorStop(1, "#4ca1af"); // Teal
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      // Draw the captured canvas onto the final canvas, centered with margins
+      ctx.drawImage(capturedCanvas, margin, margin);
+
+      // --- Trigger download ---
+      try {
         const imgData = finalCanvas.toDataURL("image/png", 1.0);
         const link = document.createElement("a");
         link.href = imgData;
-        link.download = "results.png";
+        link.download = `InterviewAI_Results_${userData.firstName}_${userData.lastName}.png`; // More descriptive filename
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       } catch (error) {
-        console.error("Ошибка при создании изображения:", error);
-        alert("Не удалось создать изображение. Проверьте консоль на наличие ошибок.");
-      } finally {
-        const buttonsContainer = captureWrapper.querySelector('.download-section');
-        if (buttonsContainer) buttonsContainer.style.display = "";
-        const scoresContainer = captureWrapper.querySelector(".scores-container");
-        scoresContainer.style.width = "";
-        scoresContainer.style.gap = "";
-        descriptionElement.style.width = "";
-        captureWrapper.style.height = "";
-        captureWrapper.style.width = "";
+        console.error("Error generating or downloading image:", error);
+        alert("Failed to generate the download image. Please check the console for errors.");
       }
     }
   </script>
@@ -1433,3 +1491,4 @@
     </p>
   </footer>
 </html>
+
