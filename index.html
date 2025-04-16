@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>InterviewAI • AI-Based Tests for Employee Evaluation</title>
+  <script src="https://www.paypal.com/sdk/js?client-id=YOUR_CLIENT_ID"></script> <!-- REPLACE WITH YOUR PAYPAL CLIENT ID -->
   <!-- Подключаем Font Awesome для иконок -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-p+UO6hS+pX6J7aC1JSe90IrdRRojjkM+j9ViD+7fV3bTJxi60+0/fDfSB6lZl1rXLSB6BGcfScgTWWqtGf5S3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -194,7 +195,7 @@
     }
     .score-card h4 {
       margin: 0 0 8px;
-      font-size: 14px;
+      font-size: 11px;
       line-height: 1.2;
       word-break: break-word;
       overflow-wrap: break-word;
@@ -202,7 +203,7 @@
     }
     .score-card p {
       margin: 0;
-      font-size: 18px;
+      font-size: 15px;
       font-weight: bold;
       line-height: 1.2;
       color: #ffffff;
@@ -488,8 +489,12 @@
     #conversation {
       overflow-y: auto;
       flex-grow: 1; /* Allow conversation to take up available space */
-    }
-  </style>
+   }
+
+   .test-card a {
+     text-decoration: none;
+   }
+ </style>
 </head>
 <style>
   html, body {
@@ -571,26 +576,26 @@
       </section>
       <section id="result-interface">
         <!-- Обёртка для финального результата, которая будет захвачена -->
-        <div id="capture-wrapper">
+        <div id="capture-wrapper" style="display: flex; flex-direction: column; align-items: center;">
           <div id="result-header"></div>
           <!-- Элемент для карточки с пользовательскими данными -->
           <div id="user-info-card"></div>
          <div class="radar-chart-container">
-           <div id="radar-legend" class="radar-legend"></div>
-           <canvas id="radar-chart"></canvas>
+          <div id="radar-legend" class="radar-legend"></div>
+          <canvas id="radar-chart"></canvas>
+        </div>
+         <div class="scores-container" id="scores-container"></div>
+         <div id="result-description"></div>
+         <div class="download-section">
+          <button class="restart-button" onclick="location.reload();"></button>
+          <label for="download-lang-selector">Download language:</label>
+          <select id="download-lang-selector">
+           <option value="en">English</option>
+           <option value="ru">Русский</option>
+           <option value="he">עברית</option>
+          </select>
+          <button class="share-button" onclick="downloadImage()"></button>
          </div>
-          <div class="scores-container" id="scores-container"></div>
-          <div id="result-description"></div>
-          <div class="download-section">
-            <button class="restart-button" onclick="location.reload();"></button>
-            <label for="download-lang-selector">Download language:</label>
-            <select id="download-lang-selector">
-              <option value="en">English</option>
-              <option value="ru">Русский</option>
-              <option value="he">עברית</option>
-            </select>
-            <button class="share-button" onclick="downloadImage()"></button>
-          </div>
         </div>
       </section>
     </main>
@@ -602,7 +607,22 @@
         <h2 id="supportUsTitle"><span data-translate="supportUsTitle">Support Our Project</span></h2>
         <p id="supportUsDescription"><span data-translate="supportUsDescription">Your contribution helps us maintain and improve this platform.</span></p>
         <button id="supportUsButton" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: block; width: 100%; font-size: 16px; cursor: pointer; border-radius: 5px;"><span data-translate="supportUsButton">Support the Project</span></button>
-      </div>
+      
+      <div id="paypal-container-BTE5CQVQE4BVC"></div>
+<script>
+  window.paypalAsync = function () {
+    paypal.HostedButtons({
+      hostedButtonId: "BTE5CQVQE4BVC",
+    }).render("#paypal-container-BTE5CQVQE4BVC");
+  };
+
+  window.addEventListener('load', function() {
+    if (typeof paypal !== 'undefined') {
+      paypalAsync();
+    }
+  });
+</script>
+</div>
     </aside>
   </div>
   
@@ -627,6 +647,10 @@
   </div>
   
   <script>
+    function scrollToInput() {
+      const answerTextarea = document.getElementById('answer-textarea');
+      answerTextarea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
     // Функция задержки
     function delay(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
@@ -906,7 +930,7 @@
       translations[currentLang].tests.forEach(testData => {
         const card = document.createElement("div");
         card.className = "test-card";
-        card.innerHTML = `<a href="#chat-container"><h3>${testData.name}</h3><p>${testData.description}</p></a>`;
+        card.innerHTML = `<a href="#answer-textarea" style="text-decoration: none !important;"><h3>${testData.name}</h3><p>${testData.description}</p></a>`;
         card.addEventListener("click", (event) => { startTest(testData, event); });
         testListDiv.appendChild(card);
       });
@@ -1398,17 +1422,11 @@
       }
     }
   </script>
-  <script>
-    function scrollToInput() {
-      const inputElement = document.getElementById('answer-textarea');
-      if (inputElement) {
-        inputElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }
-    }
+</body>
+  <footer>
+    <p>
+      © InterviewAI 2025 Created and promoted by <a href="https://www.linkedin.com/in/sbdt" target="_blank">Illya Lazarev</a>.
+    </p>
+  </footer>
+</html>
 
-    window.addEventListener('resize', scrollToInput);
-    document.getElementById('next-question-button').addEventListener('click', scrollToInput);
-
-    // Initial scroll on page load
-    scrollToInput();
-  </script>
