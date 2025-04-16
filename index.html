@@ -93,12 +93,12 @@
     }
     .test-card h3 {
       margin: 0;
-      font-size: 18px;
+      font-size: 16px;
       color: #0a2540;
     }
     .test-card p {
       margin: 5px 0 0;
-      font-size: 14px;
+      font-size: 12px;
       color: #666;
     }
     #test-interface, #result-interface { display: none; }
@@ -115,6 +115,7 @@
       margin: 10px 0;
       padding: 10px;
       border-radius: 5px;
+      font-size: 14px; /* Reduced font size */
     }
     #conversation p.ai-message { background-color: #e6f0fa; color: #0a2540; }
     #conversation p.user-message { background-color: #edf7ed; text-align: right; }
@@ -172,6 +173,7 @@
       padding: 30px;
       border-radius: 15px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      box-sizing: border-box; /* Ensure padding is included in width */
     }
     .scores-container {
       display: flex;
@@ -185,7 +187,8 @@
       padding: 15px;
       border-radius: 8px;
       /* width: 100px; /* Removed fixed width */
-      flex: 1 1 80px; /* Flexible sizing: grow, shrink, basis 80px */
+      flex: 0 0 30%; /* Do not grow, do not shrink, basis 30% */
+      width: 30%; /* Ensure width is respected */
       text-align: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
@@ -236,6 +239,42 @@
     }
     .share-button:hover { background-color: #1e7e34; }
     /* Контейнер для кнопок и селектора скачивания */
+.radar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.radar-legend-item {
+  display: inline-block;
+  margin: 5px;
+  font-size: 12px;
+}
+.radar-legend-marker {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 3px;
+}
+.radar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.radar-legend-item {
+  display: inline-block;
+  margin: 5px;
+  font-size: 12px;
+}
+.radar-legend-marker {
+  display: inline-block;
+  width: 12px;
+  text-align: center;
+  margin-right: 3px;
+  font-weight: bold;
+}
     .download-section {
       display: flex;
       align-items: center;
@@ -277,13 +316,19 @@
         order: 1;
       }
       .download-section { flex-direction: column; gap: 5px; }
-      #user-info-card { flex-wrap: wrap; justify-content: center; text-align: center; } /* Allow wrapping & center on mobile */
-      .user-info-right { align-items: center; margin-left: 0; } /* Center contact info */
+     #user-info-card { flex-wrap: wrap; justify-content: center; text-align: center; } /* Allow wrapping & center on mobile */
+     .user-info-right { align-items: center; margin-left: 0; } /* Center contact info */
+     html[dir="rtl"] #input-container {
+       padding: 0 5px;
+     }
       .scores-container { gap: 5px; } /* Adjust gap for mobile */
       .score-card { flex-basis: 70px; } /* Adjust basis slightly for mobile */
-      header h1 { font-size: 24px; } /* Reduce header size */
+      header h1 { font-size: 20px; } /* Reduce header size */
       #lang-selector { top: 10px; right: 10px; font-size: 14px; } /* Adjust language selector position */
-      .radar-chart-container { padding: 15px; }
+      .radar-chart-container {
+        padding: 10px; /* Reduce padding on mobile */
+        max-width: 95%; /* Prevent touching edges */
+      }
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -524,9 +569,10 @@
           <div id="result-header"></div>
           <!-- Элемент для карточки с пользовательскими данными -->
           <div id="user-info-card"></div>
-          <div class="radar-chart-container">
-            <canvas id="radar-chart"></canvas>
-          </div>
+         <div class="radar-chart-container">
+           <div id="radar-legend" class="radar-legend"></div>
+           <canvas id="radar-chart"></canvas>
+         </div>
           <div class="scores-container" id="scores-container"></div>
           <div id="result-description"></div>
           <div class="download-section">
@@ -854,7 +900,7 @@
       translations[currentLang].tests.forEach(testData => {
         const card = document.createElement("div");
         card.className = "test-card";
-        card.innerHTML = `<h3>${testData.name}</h3><p>${testData.description}</p>`;
+        card.innerHTML = `<a href="#chat-container"><h3>${testData.name}</h3><p>${testData.description}</p></a>`;
         card.addEventListener("click", (event) => { startTest(testData, event); });
         testListDiv.appendChild(card);
       });
@@ -1043,28 +1089,61 @@
         console.error("Ошибка: Элемент canvas с ID 'radar-chart' не найден!");
         return;
       }
+    
+      const labels = Object.keys(result).filter(key => key !== "descriptions");
+      const data = labels.map(label => result[label]);
+    
+      const legendContainer = document.getElementById("radar-legend");
+      legendContainer.innerHTML = "";
+    
+      const datasets = [{
+        label: "Your Results",
+        data: data,
+        backgroundColor: "rgba(255, 255, 255, 0.3)",
+        borderColor: "#ffffff",
+        borderWidth: 2,
+        pointBackgroundColor: [], // Dynamic colors for points
+        pointBorderColor: "#ffffff"
+      }];
+    
+      const chartColors = [
+        "rgba(255, 99, 132, 1)",   // Red
+        "rgba(54, 162, 235, 1)",  // Blue
+        "rgba(255, 206, 86, 1)",  // Yellow
+        "rgba(75, 192, 192, 1)",  // Green
+        "rgba(153, 102, 255, 1)", // Purple
+        "rgba(255, 159, 64, 1)",  // Orange
+        "rgba(120, 120, 120, 1)", // Gray
+        "rgba(0, 0, 0, 1)",       // Black
+        "rgba(255, 0, 0, 1)",     // Dark Red
+        "rgba(0, 255, 0, 1)"      // Dark Green
+      ];
+    
+      // Generate legend items and assign colors
+      for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
+        const color = chartColors[i % chartColors.length]; // Cycle through colors
+    
+        datasets[0].pointBackgroundColor.push(color);
+    
+        const legendItem = document.createElement("div");
+        legendItem.className = "radar-legend-item";
+        legendItem.innerHTML = `<span class="radar-legend-marker" style="background-color: ${color};"></span>${label.replace(/_/g, " ")}`;
+        legendContainer.appendChild(legendItem);
+      }
+    
       if (radarChart !== null) {
         radarChart.destroy();
         radarChart = null;
       }
+    
       const ctx = canvasElement.getContext("2d");
-      const labels = Object.keys(result).filter(key => key !== "descriptions");
-      const data = labels.map(label => result[label]);
-      const scores = labels.map(label => [label, result[label]]);
-
+    
       radarChart = new Chart(ctx, {
         type: "radar",
         data: {
           labels: labels,
-          datasets: [{
-            label: "Your Results",
-            data: data,
-            backgroundColor: "rgba(255, 255, 255, 0.3)",
-            borderColor: "#ffffff",
-            borderWidth: 2,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "#ffffff"
-          }]
+          datasets: datasets
         },
         options: {
           scales: {
@@ -1074,11 +1153,11 @@
               angleLines: { color: "rgba(255,255,255,0.3)" },
               grid: { color: "rgba(255,255,255,0.2)" },
               pointLabels: {
-                font: { size: 12 },
+                font: { size: 10 },
                 color: "#ffffff",
-                padding: 20,
+                padding: 15,
                 callback: function(label) {
-                  return label.replace(/_/g, " ").split(" ");
+                  return "";
                 }
               },
               ticks: {
@@ -1091,9 +1170,11 @@
           plugins: { legend: { display: false } }
         }
       });
+    
       const scoresContainer = document.getElementById("scores-container");
       if (scoresContainer) {
         scoresContainer.innerHTML = "";
+        const scores = labels.map(label => [label, result[label]]);
         if (scores.length > 0) {
           scores.forEach(([key, value]) => {
             const scoreCard = document.createElement("div");
@@ -1309,6 +1390,21 @@
       }
     }
   </script>
+  <script>
+    function scrollChatToBottom() {
+      const chatContainer = document.getElementById('chat-container');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    window.addEventListener('resize', scrollChatToBottom);
+
+    document.getElementById('next-question-button').addEventListener('click', scrollChatToBottom);
+
+    // Initial scroll on page load
+    scrollChatToBottom();
+  </script>
 </body>
   <footer>
     <p>
@@ -1316,3 +1412,4 @@
     </p>
   </footer>
 </html>
+
