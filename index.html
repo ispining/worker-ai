@@ -658,7 +658,14 @@
         resultInterface: { header: "Your Results", restart: "Restart Test", download: "Download as PNG" },
         rightColumnTitle: "Advice",
         rightColumnAdvice: "Answer honestly and take your time – the AI analyzes every word.",
-        
+        promptHelper: {
+          history: "Conversation history:",
+          aiPrefix: "AI:",
+          userPrefix: "User:",
+          nextInstruction: "Generate the next question or result.",
+          firstInstruction: "Generate your first specific question.",
+          finalInstruction: "Now finish the test and provide the result."
+        },
         supportUsTitle: "Support Our Project",
         supportUsDescription: "Your contribution helps us maintain and improve this platform.",
         supportUsButton: "Support the Project",
@@ -735,6 +742,14 @@
         resultInterface: { header: "Ваши результаты", restart: "Пройти тест снова", download: "Скачать как PNG" },
         rightColumnTitle: "Советы",
         rightColumnAdvice: "Отвечайте честно и не торопитесь — ИИ анализирует каждое слово.",
+        promptHelper: {
+          history: "История общения:",
+          aiPrefix: "ИИ:",
+          userPrefix: "Пользователь:",
+          nextInstruction: "Сгенерируй следующий вопрос или результат.",
+          firstInstruction: "Сгенерируй свой первый конкретный вопрос.",
+          finalInstruction: "Теперь заверши тест и дай результат."
+        },
         modal: {
           header: "Введите ваши данные",
           firstName: "Имя",
@@ -809,6 +824,14 @@
         resultInterface: { header: "התוצאות שלך", restart: "הפעל שוב את המבחן", download: "הורד כ-PNG" },
         rightColumnTitle: "עצות",
         rightColumnAdvice: "ענה בכנות ואל תמהר — הבינה המלאכותית מנתחת כל מילה.",
+        promptHelper: {
+          history: "היסטוריית שיחה:",
+          aiPrefix: "AI:",
+          userPrefix: "משתמש:",
+          nextInstruction: "צור את השאלה או התוצאה הבאה.",
+          firstInstruction: "צור את השאלה הספציפית הראשונה שלך.",
+          finalInstruction: "כעת סיים את המבחן וספק את התוצאה."
+        },
         modal: {
           header: "הזן את פרטיך",
           firstName: "שם פרטי",
@@ -935,10 +958,8 @@
     if (storedLanguage) {
       currentLang = storedLanguage;
     }
-
-    renderTestList();
-
-    // Detect browser language
+ 
+    // Detect browser language FIRST
     const browserLanguage = navigator.language || navigator.userLanguage;
     const supportedLanguages = ['en', 'ru', 'he'];
     let initialLanguage = 'en'; // Default to English
@@ -958,7 +979,8 @@
     document.getElementById('lang-selector').value = currentLang;
 
     updateStaticTexts();
-
+    renderTestList(); // Render list AFTER final language is set
+ 
     let currentTest = null;
     let currentStep = 0;
     let conversationHistory = [];
@@ -989,12 +1011,13 @@
       while (attempts < maxAttempts) {
         try {
           let requestText = currentTest.prompt;
+          const promptHelper = translations[currentLang].promptHelper;
           if (conversationHistory.length > 0) {
-            requestText += "\n\nИстория общения:\n" +
-              conversationHistory.map(item => `ИИ: ${item.question}\nПользователь: ${item.answer}`).join("\n") +
-              "\n\nСгенерируй следующий вопрос или результат.";
+            requestText += `\n\n${promptHelper.history}\n` +
+              conversationHistory.map(item => `${promptHelper.aiPrefix} ${item.question}\n${promptHelper.userPrefix} ${item.answer}`).join("\n") +
+              `\n\n${promptHelper.nextInstruction}`;
           } else {
-            requestText += "\n\nСгенерируй свой первый конкретный вопрос.";
+            requestText += `\n\n${promptHelper.firstInstruction}`;
           }
           const response = await fetch(
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + "AIzaSyAc_Rq0fTKmaUP1tYPXS0gjSSFpoFQQHBE",
@@ -1064,9 +1087,9 @@
             body: JSON.stringify({ 
               contents: [{
                 parts: [{
-                  text: currentTest.prompt + "\n\nИстория общения:\n" +
-                        conversationHistory.map(item => `ИИ: ${item.question}\nПользователь: ${item.answer}`).join("\n") +
-                        "\n\nТеперь заверши тест и дай результат."
+                  text: currentTest.prompt + `\n\n${translations[currentLang].promptHelper.history}\n` +
+                        conversationHistory.map(item => `${translations[currentLang].promptHelper.aiPrefix} ${item.question}\n${translations[currentLang].promptHelper.userPrefix} ${item.answer}`).join("\n") +
+                        `\n\n${translations[currentLang].promptHelper.finalInstruction}`
                 }]
               }]
             })
