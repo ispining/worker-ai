@@ -329,6 +329,12 @@
         padding: 10px; /* Reduce padding on mobile */
         max-width: 95%; /* Prevent touching edges */
       }
+
+      #answer-textarea {
+        line-height: 1.3; /* Adjust line spacing */
+        font-size: 14px; /* Adjust font size */
+        height: 80px; /* Adjust height */
+      }
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -949,6 +955,7 @@
     const maxSteps = 3;
   
     function startTest(testData, event) {
+      event.preventDefault(); // Prevent default anchor link behavior
       currentTest = testData;
       currentStep = 0;
       conversationHistory = [];  // Обнуляем историю беседы
@@ -961,6 +968,7 @@
       document.getElementById('conversation').innerHTML = "";
       document.getElementById('answer-textarea').value = "";
       askQuestion();
+      scrollToInput(); // Scroll to input after displaying test interface
     }
   
     async function askQuestion() {
@@ -1391,25 +1399,16 @@
     }
   </script>
   <script>
-    function scrollChatToBottom() {
-      const chatContainer = document.getElementById('chat-container');
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+    function scrollToInput() {
+      const inputElement = document.getElementById('answer-textarea');
+      if (inputElement) {
+        inputElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
     }
 
-    window.addEventListener('resize', scrollChatToBottom);
-
-    document.getElementById('next-question-button').addEventListener('click', scrollChatToBottom);
+    window.addEventListener('resize', scrollToInput);
+    document.getElementById('next-question-button').addEventListener('click', scrollToInput);
 
     // Initial scroll on page load
-    scrollChatToBottom();
+    scrollToInput();
   </script>
-</body>
-  <footer>
-    <p>
-      © InterviewAI 2025 Created and promoted by <a href="https://www.linkedin.com/in/sbdt" target="_blank">Illya Lazarev</a>.
-    </p>
-  </footer>
-</html>
-
