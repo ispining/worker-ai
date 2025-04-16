@@ -1321,10 +1321,11 @@
       // Устанавливаем высоту обёртки равной ее scrollHeight для захвата всей области
       //captureWrapper.style.height = captureWrapper.scrollHeight + "px";
       captureWrapper.style.height = "auto";
+      captureWrapper.style.width = "auto";
       
       // Получаем размеры области захвата
       const resultRect = captureWrapper.getBoundingClientRect();
-      const scale = 2;
+      const scale = 1;
       // Увеличиваем размеры canvas, добавляя отступы
       const finalCanvas = document.createElement("canvas");
       finalCanvas.width = Math.ceil((resultRect.width + margin * 2) * scale);
@@ -1432,4 +1433,3 @@
     </p>
   </footer>
 </html>
-
