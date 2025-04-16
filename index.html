@@ -213,7 +213,7 @@
       padding: 20px;
       background: rgba(255,255,253,0.2);
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 14px;
       line-height: 1.4;
       color: #d3d3d3;
       box-shadow: 0 4px 10px rgba(0,0,0,0.15);
@@ -1359,8 +1359,11 @@
           const chartImg = new Image();
           chartImg.src = chartImgData;
           await new Promise(resolve => chartImg.onload = resolve);
+          const chartWidth = radarChart.canvas.width;
+          const chartHeight = radarChart.canvas.height;
+          const aspectRatio = chartWidth / chartHeight;
           const w = rect.width * scale;
-          const h = rect.height * scale;
+          const h = w / aspectRatio; // Calculate height based on aspect ratio
           const shadowCanvas = document.createElement("canvas");
           shadowCanvas.width = w;
           shadowCanvas.height = h;
@@ -1422,6 +1425,3 @@
     <p>
       © InterviewAI 2025 Created and promoted by <a href="https://www.linkedin.com/in/sbdt" target="_blank">Illya Lazarev</a>.
     </p>
-  </footer>
-</html>
-
