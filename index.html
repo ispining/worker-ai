@@ -1336,15 +1336,22 @@
       // Функция для захвата элемента с учетом дополнительного отступа
       async function placeElementAsIs(element, useHtml2canvas = true) {
         const rect = element.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
         // Добавляем дополнительное смещение margin (умноженное на scale) к координатам
         const offsetX = margin * scale + (rect.left - resultRect.left) * scale;
         const offsetY = margin * scale + (rect.top - resultRect.top) * scale;
         if (useHtml2canvas) {
-          const subCanvas = await html2canvas(element, { 
-            scale, 
+          const subCanvas = await html2canvas(element, {
+            scale,
             backgroundColor: null,
             scrollY: 0,
-            scrollX: 0 
+            scrollX: 0,
+            // Add this to account for device pixel ratio
+            //width: rect.width,
+            //height: rect.height,
+            //windowWidth: rect.width * dpr,
+            //windowHeight: rect.height * dpr,
+            //devicePixelRatio: dpr,
           });
           ctx.drawImage(subCanvas, offsetX, offsetY);
         } else {
