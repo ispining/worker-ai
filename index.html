@@ -538,7 +538,7 @@
       <section id="welcome-section">
         <h2 id="welcome-title"></h2>
         <p id="welcome-description"></p>
-        <img id="welcome-image" src="https://via.placeholder.com/600x300" alt="">
+        <img id="welcome-image" src="https://raw.githubusercontent.com/ispining/worker-ai/refs/heads/main/21_42.png" alt="">
       </section>
       <style>
        #test-interface {
@@ -606,22 +606,8 @@
       <div class="donation-container">
         <h2 id="supportUsTitle"><span data-translate="supportUsTitle">Support Our Project</span></h2>
         <p id="supportUsDescription"><span data-translate="supportUsDescription">Your contribution helps us maintain and improve this platform.</span></p>
-        <button id="supportUsButton" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: block; width: 100%; font-size: 16px; cursor: pointer; border-radius: 5px;"><span data-translate="supportUsButton">Support the Project</span></button>
+        <button id="supportUsButton" onclick="window.location.href='https://paypal.me/SBDTpay'" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: block; width: 100%; font-size: 16px; cursor: pointer; border-radius: 5px;"><span data-translate="supportUsButton">Support the Project</span></button>
       
-      <div id="paypal-container-BTE5CQVQE4BVC"></div>
-<script>
-  window.paypalAsync = function () {
-    paypal.HostedButtons({
-      hostedButtonId: "BTE5CQVQE4BVC",
-    }).render("#paypal-container-BTE5CQVQE4BVC");
-  };
-
-  window.addEventListener('load', function() {
-    if (typeof paypal !== 'undefined') {
-      paypalAsync();
-    }
-  });
-</script>
 </div>
     </aside>
   </div>
