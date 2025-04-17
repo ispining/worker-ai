@@ -1541,6 +1541,19 @@
 
       // Draw the captured canvas onto the final canvas, centered with margins
       ctx.drawImage(capturedCanvas, margin, margin);
+      // --- Draw Watermark ---
+      const watermarkText = "✔️ Verified by worker-ai.render.com";
+      const watermarkFontSize = 16 * scale; // Scale font size with capture scale
+      ctx.font = `bold ${watermarkFontSize}px Arial`;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; // Semi-transparent white
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      // Position near bottom-right corner, inside the margin
+      const watermarkX = finalCanvas.width - margin - (10 * scale);
+      const watermarkY = finalCanvas.height - margin - (10 * scale);
+      ctx.fillText(watermarkText, watermarkX, watermarkY);
+
+
 
       // --- Trigger download ---
       try {
